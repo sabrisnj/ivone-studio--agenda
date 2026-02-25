@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#FFF9F8">
+    <meta name="description" content="Ivone Hair Studio - Especialista em Coloração Premium, Unhas e Bem-estar.">
+    
+    <title>Ivone Hair Studio | Agendamento Digital</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              primary: 'var(--primary)',
+              secondary: 'var(--secondary)',
+              accent: 'var(--accent)',
+              'studio-text': 'var(--text)',
+              'studio-bg': 'var(--bg)',
+            },
+            fontFamily: {
+              serif: ['Playfair Display', 'serif'],
+              sans: ['Montserrat', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #D99489;
+            --secondary: #86BDB1;
+            --accent: #8B5E3C;
+            --text: #4A3B39;
+            --bg: #FFF9F8;
+            --font-scale: 1;
+        }
+
+        /* Aplica o escalonamento na raiz para que o 'rem' do Tailwind funcione corretamente */
+        html {
+            font-size: calc(16px * var(--font-scale));
+        }
+
+        html.dark-mode {
+            --bg: #1A1A1A;
+            --text: #F5F5F5;
+            --primary: #E2A79E;
+        }
+
+        html.high-contrast {
+            --bg: #000000;
+            --text: #FFFF00;
+            --primary: #00FFFF;
+            --secondary: #00FF00;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        h1, h2, h3, .font-serif {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .animate-fade { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        html.dark-mode .glass-nav {
+            background: rgba(30, 30, 30, 0.85);
+        }
+        
+        @media (min-width: 768px) {
+            #root {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                background-color: #f3f4f6;
+            }
+        }
+    </style>
+
+    <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@19.0.0",
+    "react-dom": "https://esm.sh/react-dom@19.0.0",
+    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
+    "lucide-react": "https://esm.sh/lucide-react@0.468.0",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.41.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div id="root"></div>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>

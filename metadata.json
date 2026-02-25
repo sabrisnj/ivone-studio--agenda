@@ -1,0 +1,8 @@
+{
+  "name": "New Ivone Hair Studio Best1",
+  "description": "Seu Studio de beleza digital. Agendamentos, programa de fidelidade e novidades exclusivas para realçar sua beleza natural.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
