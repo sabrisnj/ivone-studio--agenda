@@ -145,7 +145,7 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
           />
           <button 
             onClick={handleUnlock}
-            className="w-full bg-[#D4B499] text-white py-6 rounded-[2rem] font-bold uppercase text-[11px] tracking-widest shadow-xl active:scale-95 transition-all"
+            className="w-full bg-[#D4B499] text-studio-ink py-6 rounded-[2rem] font-bold uppercase text-[11px] tracking-widest shadow-xl active:scale-95 transition-all"
           >
             Entrar no Painel
           </button>
@@ -194,7 +194,7 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
           <div className="space-y-8">
             <div className="flex justify-between items-center px-2">
               <h3 className="text-xl font-serif font-bold dark:text-white">Horários</h3>
-              <button onClick={() => setShowQuickBook(true)} className="bg-[#86BDB1] text-white px-5 py-3 rounded-2xl text-[9px] font-bold uppercase flex items-center gap-2 shadow-lg">
+              <button onClick={() => setShowQuickBook(true)} className="bg-[#86BDB1] text-studio-ink px-5 py-3 rounded-2xl text-[9px] font-bold uppercase flex items-center gap-2 shadow-lg">
                 <PlusCircle size={16}/> Agendar
               </button>
             </div>
@@ -217,7 +217,7 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
                        <input type="time" value={qbData.time} onChange={e => setQbData({...qbData, time: e.target.value})} className="w-full p-4 bg-white dark:bg-zinc-800 rounded-2xl text-xs outline-none" />
                     </div>
                  </div>
-                 <button onClick={handleQuickBook} className="w-full bg-[#86BDB1] text-white py-5 rounded-[2rem] font-bold uppercase text-[10px] tracking-widest shadow-xl">Confirmar</button>
+                 <button onClick={handleQuickBook} className="w-full bg-[#86BDB1] text-studio-ink py-5 rounded-[2rem] font-bold uppercase text-[10px] tracking-widest shadow-xl">Confirmar</button>
                </div>
             )}
 
@@ -230,40 +230,62 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
                       <div className="space-y-1">
                         <span className="text-[9px] font-bold text-[#D4B499] uppercase tracking-widest">{service?.name}</span>
                         <h4 className="text-lg font-serif font-bold dark:text-white">{app.clientName}</h4>
-                        <p className="text-[10px] text-gray-400 font-medium flex items-center gap-1"><Phone size={10}/> {app.clientPhone}</p>
+                        <p className="text-[10px] text-gray-600 font-medium flex items-center gap-1"><Phone size={10}/> {app.clientPhone}</p>
                       </div>
                       <div className="flex flex-col gap-2">
                          {app.status === 'pending' && (
-                           <button onClick={() => confirmAppointment(app.id)} className="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center shadow-lg">
+                           <button onClick={() => confirmAppointment(app.id)} className="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center shadow-lg" title="Confirmar Agendamento">
                               <CheckCircle size={22}/>
                            </button>
                          )}
-                         {app.status === 'confirmed' && (
-                           <button onClick={() => completeAppointment(app.id)} className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg">
+                         {app.status === 'confirmed' && app.checkInStatus === 'checked_in' && (
+                           <div className="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-1">
+                             <MapPin size={10}/> No Salão
+                           </div>
+                         )}
+                         {app.status === 'in_service' && (
+                           <button onClick={() => completeAppointment(app.id)} className="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center shadow-lg" title="Concluir Serviço">
                               <Check size={22}/>
                            </button>
                          )}
-                         <button onClick={() => cancelAppointment(app.id)} className="w-12 h-12 bg-red-50 text-red-400 rounded-2xl flex items-center justify-center shadow-inner">
+                         <button onClick={() => cancelAppointment(app.id)} className="w-12 h-12 bg-red-50 text-red-400 rounded-2xl flex items-center justify-center shadow-inner" title="Cancelar">
                             <XCircle size={22} />
                          </button>
                       </div>
                     </div>
+
+                    {app.checkInPhoto && (
+                      <div className="mt-2">
+                        <p className="text-[8px] font-bold text-gray-600 uppercase mb-1">Foto do Check-in</p>
+                        <div className="w-20 h-20 rounded-xl overflow-hidden border border-gray-200">
+                          <img src={app.checkInPhoto} className="w-full h-full object-cover" alt="Check-in" />
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex gap-3 bg-[#FAF7F5] dark:bg-zinc-800 p-4 rounded-2xl border border-[#F5E6DA]/30">
                        <div className="flex-1">
-                          <p className="text-[8px] font-bold text-gray-400 uppercase">Data</p>
+                          <p className="text-[8px] font-bold text-gray-600 uppercase">Data</p>
                           <p className="text-xs font-bold dark:text-gray-200">{app.date.split('-').reverse().join('/')}</p>
                        </div>
                        <div className="flex-1 border-l border-[#F5E6DA] pl-3">
-                          <p className="text-[8px] font-bold text-gray-400 uppercase">Hora</p>
+                          <p className="text-[8px] font-bold text-gray-600 uppercase">Hora</p>
                           <p className="text-xs font-bold dark:text-gray-200">{app.time}</p>
                        </div>
                        <div className="flex-1 border-l border-[#F5E6DA] pl-3">
-                          <p className="text-[8px] font-bold text-gray-400 uppercase">Pagamento</p>
+                          <p className="text-[8px] font-bold text-gray-600 uppercase">Pagamento</p>
                           <button 
                             onClick={() => confirmPayment(app.id)}
-                            className={`text-[9px] font-bold px-2 py-1 rounded-lg ${app.paymentStatus === 'paid' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}`}
+                            disabled={app.paymentStatus === 'paid'}
+                            className={`text-[9px] font-bold px-2 py-1 rounded-lg transition-all ${
+                              app.paymentStatus === 'paid' 
+                                ? 'bg-emerald-100 text-emerald-600' 
+                                : app.paymentStatus === 'waiting_verification'
+                                  ? 'bg-amber-400 text-white animate-pulse'
+                                  : 'bg-amber-100 text-amber-600'
+                            }`}
                           >
-                            {app.paymentStatus === 'paid' ? 'Pago' : 'Pendente'}
+                            {app.paymentStatus === 'paid' ? 'Pago' : app.paymentStatus === 'waiting_verification' ? 'Confirmar?' : 'Pendente'}
                           </button>
                        </div>
                     </div>
@@ -279,7 +301,7 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
           <div className="space-y-8">
             <div className="flex justify-between items-center px-2">
               <h3 className="text-xl font-serif font-bold dark:text-white">Catálogo</h3>
-              <button onClick={handleAddService} className="bg-[#D4B499] text-white px-5 py-3 rounded-2xl text-[9px] font-bold uppercase flex items-center gap-2 shadow-lg">
+              <button onClick={handleAddService} className="bg-[#D4B499] text-studio-ink px-5 py-3 rounded-2xl text-[9px] font-bold uppercase flex items-center gap-2 shadow-lg">
                 <Plus size={16}/> Novo
               </button>
             </div>
@@ -304,14 +326,14 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
                       <div className="flex justify-between items-start">
                         <div>
                           <h4 className="font-bold text-sm dark:text-white">{s.name}</h4>
-                          <p className="text-[10px] text-gray-400">{s.category} • {s.duration}</p>
+                          <p className="text-[10px] text-gray-600">{s.category} • {s.duration}</p>
                         </div>
                         <div className="flex gap-2">
                           <button onClick={() => setEditingService(s)} className="p-2 bg-gray-50 rounded-lg text-gray-400"><Settings size={14}/></button>
                           <button onClick={() => deleteService(s.id)} className="p-2 bg-red-50 rounded-lg text-red-400"><Trash2 size={14}/></button>
                         </div>
                       </div>
-                      <p className="text-[10px] text-gray-500 italic">{s.description}</p>
+                      <p className="text-[10px] text-gray-700 italic">{s.description}</p>
                       <p className="text-xs font-bold text-[#D4B499]">R$ {s.price}</p>
                     </>
                   )}
@@ -332,7 +354,7 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
                     <h4 className="font-bold text-sm dark:text-white">{offer.title}</h4>
                     <button 
                       onClick={() => updateWeeklyOffer(offer.day, { active: !offer.active })}
-                      className={`px-4 py-2 rounded-xl text-[9px] font-bold uppercase ${offer.active ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-400'}`}
+                      className={`px-4 py-2 rounded-xl text-[9px] font-bold uppercase ${offer.active ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-600'}`}
                     >
                       {offer.active ? 'Ativo' : 'Inativo'}
                     </button>
@@ -361,7 +383,7 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className="font-bold text-sm dark:text-white">{v.name}</h4>
-                      <p className="text-[10px] text-gray-400">{v.description}</p>
+                      <p className="text-[10px] text-gray-600">{v.description}</p>
                     </div>
                     <button onClick={() => redeemVoucher(v.id)} className="p-3 bg-emerald-50 text-emerald-500 rounded-xl shadow-sm">
                       <CheckCircle size={20}/>
@@ -371,7 +393,7 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
                     <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div className="h-full bg-[#D4B499]" style={{ width: `${(v.redeemed / v.limit) * 100}%` }} />
                     </div>
-                    <span className="text-[10px] font-bold text-gray-400">{v.redeemed}/{v.limit}</span>
+                    <span className="text-[10px] font-bold text-gray-600">{v.redeemed}/{v.limit}</span>
                   </div>
                 </div>
               ))}
@@ -389,7 +411,7 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className="font-bold text-sm dark:text-white">{u.name}</h4>
-                      <p className="text-[10px] text-gray-400">{u.phone}</p>
+                      <p className="text-[10px] text-gray-600">{u.phone}</p>
                     </div>
                     <div className="bg-[#FAF7F5] px-3 py-1 rounded-lg text-[9px] font-bold text-[#D4B499]">
                       {u.points.escovas + u.points.manicurePedicure + u.points.ciliosManutencao} pts
@@ -397,17 +419,17 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
                   </div>
                   {u.permanentPreferences && (
                     <div className="bg-gray-50 p-4 rounded-2xl space-y-2">
-                       <p className="text-[9px] font-bold text-gray-400 uppercase">Preferências</p>
-                       <p className="text-[10px] text-gray-600 italic">Ambiente: {u.permanentPreferences.environment}</p>
-                       <p className="text-[10px] text-gray-600 italic">Bebida: {u.permanentPreferences.refreshment}</p>
+                       <p className="text-[9px] font-bold text-gray-600 uppercase">Preferências</p>
+                       <p className="text-[10px] text-gray-700 italic">Ambiente: {u.permanentPreferences.environment}</p>
+                       <p className="text-[10px] text-gray-700 italic">Bebida: {u.permanentPreferences.refreshment}</p>
                     </div>
                   )}
                   <div className="flex gap-2">
-                    <button onClick={() => sendNotification(`Olá ${u.name.split(' ')[0]}!`, "Temos um presente para você no Studio. Vem ver! 🎁", "promo")} className="flex-1 bg-gray-100 py-3 rounded-xl text-[9px] font-bold uppercase text-gray-500">Notificar</button>
+                    <button onClick={() => sendNotification(`Olá ${u.name.split(' ')[0]}!`, "Temos um presente para você no Studio. Vem ver! 🎁", "promo")} className="flex-1 bg-gray-100 py-3 rounded-xl text-[9px] font-bold uppercase text-gray-600">Notificar</button>
                     <button onClick={() => {
                       const newPoints = { ...u.points, escovas: u.points.escovas + 1 };
                       updateUserPoints(u.id, newPoints);
-                    }} className="flex-1 bg-[#D4B499] text-white py-3 rounded-xl text-[9px] font-bold uppercase">+1 Ponto</button>
+                    }} className="flex-1 bg-[#D4B499] text-studio-ink py-3 rounded-xl text-[9px] font-bold uppercase">+1 Ponto</button>
                   </div>
                 </div>
               ))}
@@ -424,10 +446,10 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
                   <input placeholder="Link da Imagem" value={galleryUrl} onChange={e => setGalleryUrl(e.target.value)} className="w-full p-4 bg-gray-50 rounded-2xl text-xs" />
                   <div className="grid grid-cols-2 gap-2">
                      {['Cabelo', 'Unhas', 'Cílios', 'Antes e Depois'].map(cat => (
-                       <button key={cat} onClick={() => setGalleryCat(cat as any)} className={`py-3 rounded-xl text-[9px] font-bold uppercase border ${galleryCat === cat ? 'bg-[#D4B499] text-white' : 'bg-white text-gray-400'}`}>{cat}</button>
+                       <button key={cat} onClick={() => setGalleryCat(cat as any)} className={`py-3 rounded-xl text-[9px] font-bold uppercase border ${galleryCat === cat ? 'bg-[#D4B499] text-studio-ink' : 'bg-white text-gray-600'}`}>{cat}</button>
                      ))}
                   </div>
-                  <button onClick={() => { addGalleryItem(galleryUrl, galleryCat); setGalleryUrl(''); }} className="w-full bg-[#D4B499] text-white py-5 rounded-[2rem] font-bold uppercase text-[10px] tracking-widest">Postar</button>
+                  <button onClick={() => { addGalleryItem(galleryUrl, galleryCat); setGalleryUrl(''); }} className="w-full bg-[#D4B499] text-studio-ink py-5 rounded-[2rem] font-bold uppercase text-[10px] tracking-widest">Postar</button>
                </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -448,11 +470,11 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
             <div className="bg-white dark:bg-zinc-900 border border-[#F5E6DA] p-8 rounded-[3rem] space-y-6">
                <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-[9px] font-bold text-gray-400 uppercase">Título Hero</label>
+                    <label className="text-[9px] font-bold text-gray-600 uppercase">Título Hero</label>
                     <input value={salonConfig.dynamicText.heroTitle} onChange={e => updateSalonConfig({ dynamicText: { ...salonConfig.dynamicText, heroTitle: e.target.value } })} className="w-full p-4 bg-gray-50 rounded-2xl text-xs" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[9px] font-bold text-gray-400 uppercase">Subtítulo Hero</label>
+                    <label className="text-[9px] font-bold text-gray-600 uppercase">Subtítulo Hero</label>
                     <textarea value={salonConfig.dynamicText.heroSubtitle} onChange={e => updateSalonConfig({ dynamicText: { ...salonConfig.dynamicText, heroSubtitle: e.target.value } })} className="w-full p-4 bg-gray-50 rounded-2xl text-xs" />
                   </div>
                   <div className="space-y-2">
@@ -463,7 +485,7 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
                     </div>
                   </div>
                </div>
-               <button onClick={() => alert('Configurações salvas!')} className="w-full bg-[#D4B499] text-white py-5 rounded-[2rem] font-bold uppercase text-[10px] tracking-widest flex items-center justify-center gap-2"><Save size={16}/> Salvar Alterações</button>
+               <button onClick={() => alert('Configurações salvas!')} className="w-full bg-[#D4B499] text-studio-ink py-5 rounded-[2rem] font-bold uppercase text-[10px] tracking-widest flex items-center justify-center gap-2"><Save size={16}/> Salvar Alterações</button>
             </div>
 
             <div className="bg-white dark:bg-zinc-900 border border-[#F5E6DA] p-8 rounded-[3rem] space-y-6">
@@ -471,7 +493,7 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
                <div className="space-y-4">
                   <input placeholder="Título" value={notifData.title} onChange={e => setNotifData({...notifData, title: e.target.value})} className="w-full p-4 bg-gray-50 rounded-2xl text-xs" />
                   <textarea placeholder="Mensagem..." value={notifData.body} onChange={e => setNotifData({...notifData, body: e.target.value})} className="w-full p-4 bg-gray-50 rounded-2xl text-xs" />
-                  <button onClick={handleSendCustomNotif} className="w-full bg-[#86BDB1] text-white py-5 rounded-[2rem] font-bold uppercase text-[10px] tracking-widest">Enviar para Todos</button>
+                  <button onClick={handleSendCustomNotif} className="w-full bg-[#86BDB1] text-studio-ink py-5 rounded-[2rem] font-bold uppercase text-[10px] tracking-widest">Enviar para Todos</button>
                </div>
             </div>
           </div>
@@ -513,7 +535,7 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
          <button onClick={onGoToChat} className="flex-1 bg-white dark:bg-zinc-900 border border-[#F5E6DA] py-5 rounded-[2rem] shadow-xl text-[#D4B499] font-bold uppercase text-[10px] tracking-widest flex items-center justify-center gap-3">
            <MessageCircle size={20}/> Chat
          </button>
-         <button onClick={() => setActiveSubView('config')} className="flex-1 bg-[#86BDB1] py-5 rounded-[2rem] shadow-xl text-white font-bold uppercase text-[10px] tracking-widest flex items-center justify-center gap-3">
+         <button onClick={() => setActiveSubView('config')} className="flex-1 bg-[#86BDB1] py-5 rounded-[2rem] shadow-xl text-studio-ink font-bold uppercase text-[10px] tracking-widest flex items-center justify-center gap-3">
            <Megaphone size={20}/> Notificar
          </button>
       </footer>

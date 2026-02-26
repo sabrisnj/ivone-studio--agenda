@@ -158,6 +158,7 @@ export interface Appointment {
   status: 'pending' | 'confirmed' | 'cancelled' | 'request_cancellation' | 'completed' | 'in_service';
   paymentStatus: 'unpaid' | 'waiting_verification' | 'paid';
   checkInStatus: 'none' | 'pending_preferences' | 'checked_in';
+  checkInPhoto?: string;
   preferences?: ClientPreferences;
   reminderSent?: boolean;
   rating?: number;

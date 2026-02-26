@@ -39,7 +39,7 @@ const ProfileView: React.FC = () => {
         </div>
         <div className="space-y-1.5">
           <h2 className="text-3xl font-serif font-medium text-studio-ink dark:text-white tracking-tight">{user.name}</h2>
-          <p className="text-[11px] text-stone-400 font-bold uppercase tracking-[0.2em]">{user.phone}</p>
+          <p className="text-[11px] text-stone-600 font-bold uppercase tracking-[0.2em]">{user.phone}</p>
         </div>
       </section>
 
@@ -47,19 +47,19 @@ const ProfileView: React.FC = () => {
       <div className="flex gap-2 p-1.5 bg-stone-50 dark:bg-stone-900 rounded-2xl border border-stone-100 dark:border-stone-800">
         <button 
           onClick={() => setActiveSection('settings')}
-          className={`flex-1 py-3.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeSection === 'settings' ? 'bg-white dark:bg-stone-800 text-studio-accent shadow-sm' : 'text-stone-400'}`}
+          className={`flex-1 py-3.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeSection === 'settings' ? 'bg-white dark:bg-stone-800 text-studio-accent shadow-sm' : 'text-stone-600'}`}
         >
           <Settings size={16} className="inline mr-2" /> Preferências
         </button>
         <button 
           onClick={() => setActiveSection('data')}
-          className={`flex-1 py-3.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeSection === 'data' ? 'bg-white dark:bg-stone-800 text-studio-accent shadow-sm' : 'text-stone-400'}`}
+          className={`flex-1 py-3.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeSection === 'data' ? 'bg-white dark:bg-stone-800 text-studio-accent shadow-sm' : 'text-stone-600'}`}
         >
           <UserIcon size={16} className="inline mr-2" /> Meus Dados
         </button>
         <button 
           onClick={() => setActiveSection('policies')}
-          className={`flex-1 py-3.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeSection === 'policies' ? 'bg-white dark:bg-stone-800 text-studio-accent shadow-sm' : 'text-stone-400'}`}
+          className={`flex-1 py-3.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeSection === 'policies' ? 'bg-white dark:bg-stone-800 text-studio-accent shadow-sm' : 'text-stone-600'}`}
         >
           <ShieldCheck size={16} className="inline mr-2" /> Segurança
         </button>
@@ -72,12 +72,12 @@ const ProfileView: React.FC = () => {
             className="w-full bg-white dark:bg-stone-900 p-6 rounded-[2.5rem] border border-stone-100 dark:border-stone-800 flex items-center justify-between shadow-sm active:scale-95 transition-all hover:border-studio-accent/20"
           >
             <div className="flex items-center gap-5">
-              <div className={`p-4 rounded-2xl ${accessibility.darkMode ? 'bg-studio-accent text-white' : 'bg-stone-50 text-stone-400'}`}>
+              <div className={`p-4 rounded-2xl ${accessibility.darkMode ? 'bg-studio-accent text-studio-ink' : 'bg-stone-50 text-stone-600'}`}>
                 {accessibility.darkMode ? <Sun size={24} /> : <Moon size={24} />}
               </div>
               <div className="text-left">
                 <p className="text-base font-bold dark:text-white tracking-tight">Modo Escuro</p>
-                <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-0.5">{accessibility.darkMode ? 'Ativado' : 'Desativado'}</p>
+                <p className="text-[10px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">{accessibility.darkMode ? 'Ativado' : 'Desativado'}</p>
               </div>
             </div>
             <div className={`w-14 h-7 rounded-full p-1 transition-colors ${accessibility.darkMode ? 'bg-studio-accent' : 'bg-stone-200'}`}>
@@ -90,12 +90,12 @@ const ProfileView: React.FC = () => {
             className="w-full bg-white dark:bg-stone-900 p-6 rounded-[2.5rem] border border-stone-100 dark:border-stone-800 flex items-center justify-between shadow-sm active:scale-95 transition-all hover:border-studio-accent/20"
           >
             <div className="flex items-center gap-5">
-              <div className={`p-4 rounded-2xl ${accessibility.highContrast ? 'bg-studio-ink text-studio-gold' : 'bg-stone-50 text-stone-400'}`}>
+              <div className={`p-4 rounded-2xl ${accessibility.highContrast ? 'bg-studio-ink text-studio-gold' : 'bg-stone-50 text-stone-600'}`}>
                 <Contrast size={24} />
               </div>
               <div className="text-left">
                 <p className="text-base font-bold dark:text-white tracking-tight">Alto Contraste</p>
-                <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-0.5">Leitura Otimizada</p>
+                <p className="text-[10px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">Leitura Otimizada</p>
               </div>
             </div>
             <div className={`w-14 h-7 rounded-full p-1 transition-colors ${accessibility.highContrast ? 'bg-studio-ink' : 'bg-stone-200'}`}>
@@ -103,15 +103,33 @@ const ProfileView: React.FC = () => {
             </div>
           </button>
 
+          <button 
+            onClick={() => updateAccessibility({ fontSize: accessibility.fontSize === 100 ? 125 : 100 })}
+            className="w-full bg-white dark:bg-stone-900 p-6 rounded-[2.5rem] border border-stone-100 dark:border-stone-800 flex items-center justify-between shadow-sm active:scale-95 transition-all hover:border-studio-accent/20"
+          >
+            <div className="flex items-center gap-5">
+              <div className={`p-4 rounded-2xl ${accessibility.fontSize > 100 ? 'bg-studio-accent text-studio-ink' : 'bg-stone-50 text-stone-600'}`}>
+                <Type size={24} />
+              </div>
+              <div className="text-left">
+                <p className="text-base font-bold dark:text-white tracking-tight">Tamanho da Fonte</p>
+                <p className="text-[10px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">{accessibility.fontSize === 100 ? 'Normal' : 'Ampliado (A+)'}</p>
+              </div>
+            </div>
+            <div className={`w-14 h-7 rounded-full p-1 transition-colors ${accessibility.fontSize > 100 ? 'bg-studio-accent' : 'bg-stone-200'}`}>
+              <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform ${accessibility.fontSize > 100 ? 'translate-x-7' : 'translate-x-0'}`} />
+            </div>
+          </button>
+
           <div className="bg-white dark:bg-stone-900 p-8 rounded-[3rem] border border-stone-100 dark:border-stone-800 space-y-8 shadow-sm">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-5">
-                <div className={`p-4 rounded-2xl ${accessibility.readAloud ? 'bg-studio-sage text-white' : 'bg-stone-50 text-stone-400'}`}>
+                <div className={`p-4 rounded-2xl ${accessibility.readAloud ? 'bg-studio-sage text-studio-ink' : 'bg-stone-50 text-stone-600'}`}>
                   <Volume2 size={24} />
                 </div>
                 <div className="text-left">
                   <p className="text-base font-bold dark:text-white tracking-tight">Narração (Ivone Voice)</p>
-                  <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-0.5">Assistente Virtual</p>
+                  <p className="text-[10px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">Assistente Virtual</p>
                 </div>
               </div>
               <button 
@@ -124,7 +142,7 @@ const ProfileView: React.FC = () => {
             {accessibility.readAloud && (
               <div className="space-y-5 pt-6 border-t border-stone-50 dark:border-stone-800">
                 <div className="space-y-3">
-                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-stone-400">
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-stone-600">
                     <span>Velocidade</span>
                     <span className="text-studio-sage">{accessibility.speechRate}x</span>
                   </div>
@@ -140,22 +158,22 @@ const ProfileView: React.FC = () => {
         <div className="space-y-4 animate-fade">
           <div className="bg-white dark:bg-zinc-800 p-6 rounded-[2.5rem] border border-[#F5E6DA] dark:border-zinc-800 space-y-5 shadow-sm">
              <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-2"><UserIcon size={12}/> Nome Completo</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-gray-600 flex items-center gap-2"><UserIcon size={12}/> Nome Completo</label>
                 <input value={editName} onChange={e => setEditName(e.target.value)} className="w-full p-4 bg-gray-50 dark:bg-zinc-900 rounded-2xl outline-none border border-transparent focus:border-[#D4B499] text-sm dark:text-white" />
              </div>
              <div className="space-y-2">
-                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-2"><Calendar size={12}/> Data de Nascimento</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-gray-600 flex items-center gap-2"><Calendar size={12}/> Data de Nascimento</label>
                 <input type="date" value={editBirth} onChange={e => setEditBirth(e.target.value)} className="w-full p-4 bg-gray-50 dark:bg-zinc-900 rounded-2xl outline-none border border-transparent focus:border-[#D4B499] text-sm dark:text-white" />
-                <p className="text-[8px] text-gray-400 italic">Usamos sua data para preparar surpresas no seu mês!</p>
+                <p className="text-[8px] text-gray-600 italic">Usamos sua data para preparar surpresas no seu mês!</p>
              </div>
              <div className="space-y-2 opacity-50">
-                <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-2"><Phone size={12}/> WhatsApp (Identificador)</label>
+                <label className="text-[9px] font-black uppercase tracking-widest text-gray-600 flex items-center gap-2"><Phone size={12}/> WhatsApp (Identificador)</label>
                 <input value={user.phone} disabled className="w-full p-4 bg-gray-100 dark:bg-zinc-900 rounded-2xl text-sm dark:text-gray-500" />
              </div>
              
              <button 
                 onClick={handleSaveData}
-                className={`w-full py-5 rounded-[1.8rem] font-bold uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${isSaved ? 'bg-emerald-500 text-white' : 'bg-[#D4B499] text-white shadow-xl active:scale-95'}`}
+                className={`w-full py-5 rounded-[1.8rem] font-bold uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${isSaved ? 'bg-emerald-500 text-white' : 'bg-[#D4B499] text-studio-ink shadow-xl active:scale-95'}`}
              >
                 {isSaved ? <CheckCircle size={18}/> : <Save size={18}/>}
                 {isSaved ? 'Dados Salvos!' : 'Salvar Alterações'}
@@ -171,7 +189,7 @@ const ProfileView: React.FC = () => {
                 <ShieldCheck size={24} />
                 <h3 className="font-serif font-bold text-lg dark:text-white">Privacidade Ivone</h3>
              </div>
-             <p className="text-[11px] text-gray-500 leading-relaxed italic whitespace-pre-wrap no-scrollbar overflow-y-auto max-h-60">
+             <p className="text-[11px] text-gray-700 leading-relaxed italic whitespace-pre-wrap no-scrollbar overflow-y-auto max-h-60">
                 {TERMS_TEXT}
              </p>
              <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/50">

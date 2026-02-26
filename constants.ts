@@ -102,4 +102,5 @@ export const SERVICES: Service[] = [
 export const MOCK_VOUCHERS: Voucher[] = [
   { id: 'v1', name: 'Mimo Boas-vindas', description: 'Desconto especial no seu primeiro serviço.', limit: 10, redeemed: 7 },
   { id: 'v2', name: 'Reserva Antecipada', description: 'Spa dos Pés incluso para agendamentos matinais.', limit: 5, redeemed: 4 },
+  { id: 'v3', name: 'Social Media Star', description: 'Poste sua experiência e marque @ivonehairstudio para ganhar 2% OFF!', limit: 50, redeemed: 0 },
 ];

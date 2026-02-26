@@ -1,7 +1,7 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useApp } from '../store';
-import { ServiceCategory, Service } from '../types';
+import { ServiceCategory, Service, Appointment } from '../types';
 import { SALON_INFO, WEEKLY_OFFERS } from '../constants';
 import { 
   Leaf,
@@ -20,7 +20,10 @@ import {
   Wind,
   Plus,
   MapPin,
-  ArrowUpRight
+  ArrowUpRight,
+  CheckCircle2,
+  CreditCard,
+  Wallet
 } from 'lucide-react';
 
 interface HomeViewProps {
@@ -29,22 +32,48 @@ interface HomeViewProps {
 }
 
 const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
-  const { user, salonConfig, services, appointments, performCheckIn, weeklyOffers } = useApp();
+  const { user, salonConfig, services, appointments, performCheckIn, payAppointment, weeklyOffers } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const todayStr = new Date().toISOString().split('T')[0];
-  const todayApp = appointments.find(a => 
+  
+  // Active appointment for today
+  const activeApp = appointments.find(a => 
     a.clientPhone === user?.phone && 
     a.date === todayStr && 
-    a.status === 'confirmed' && 
-    a.checkInStatus === 'none'
+    ['confirmed', 'in_service'].includes(a.status) &&
+    a.status !== 'completed' &&
+    a.status !== 'cancelled'
   );
 
-  const lastAppointment = appointments
-    .filter(a => a.clientPhone === user?.phone && (a.status === 'completed' || a.status === 'confirmed'))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-  
-  const lastService = lastAppointment ? services.find(s => s.id === lastAppointment.serviceId) : null;
+  const handlePhotoCheckIn = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && activeApp) {
+      setIsProcessing(true);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        performCheckIn(activeApp.id, reader.result as string);
+        setIsProcessing(false);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSimpleCheckIn = () => {
+    if (activeApp) {
+      performCheckIn(activeApp.id);
+    }
+  };
+
+  const handlePayment = (method: 'debito' | 'credito' | 'pix') => {
+    if (activeApp) {
+      if (method === 'pix') {
+        alert(`Chave PIX: ${SALON_INFO.whatsapp}\nNome: Ivone Hair Studio`);
+      }
+      payAppointment(activeApp.id, method);
+    }
+  };
 
   const handleWhatsApp = () => {
     const text = encodeURIComponent(`Olá Ivone! Sou ${user?.name}, gostaria de tirar uma dúvida.`);
@@ -63,6 +92,94 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
 
   return (
     <div className="p-6 space-y-8 pb-12 animate-fade">
+      {/* ACTIVE APPOINTMENT FLOW */}
+      {activeApp && (
+        <section className="animate-fade">
+          <div className="bg-gradient-to-br from-[#D99489] to-[#8B5E3C] rounded-[2.5rem] p-6 text-white shadow-xl space-y-4 relative overflow-hidden">
+            <div className="relative z-10">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-100">Seu Agendamento de Hoje</p>
+                  <h3 className="text-xl font-serif font-bold">
+                    {services.find(s => s.id === activeApp.serviceId)?.name || 'Serviço'}
+                  </h3>
+                </div>
+                <div className="bg-white/30 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
+                  {activeApp.time}
+                </div>
+              </div>
+
+              {activeApp.status === 'confirmed' && activeApp.checkInStatus === 'none' && (
+                <div className="space-y-3 pt-2">
+                  <p className="text-[11px] italic opacity-100">Você já chegou ao studio? Faça seu check-in!</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button 
+                      onClick={handleSimpleCheckIn}
+                      className="bg-white text-[#D99489] py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
+                    >
+                      Estou no Salão
+                    </button>
+                    <button 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="bg-black/30 backdrop-blur-md text-white border border-white/40 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
+                    >
+                      <Camera size={14} /> Foto Check-in
+                    </button>
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      onChange={handlePhotoCheckIn} 
+                      accept="image/*" 
+                      capture="user" 
+                      className="hidden" 
+                    />
+                  </div>
+                </div>
+              )}
+
+              {activeApp.status === 'in_service' && activeApp.paymentStatus === 'unpaid' && (
+                <div className="space-y-3 pt-2">
+                  <p className="text-[11px] italic opacity-100">Check-in realizado! Como deseja pagar?</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button 
+                      onClick={() => handlePayment('debito')}
+                      className="bg-white/30 backdrop-blur-md text-white border border-white/40 py-3 rounded-2xl text-[9px] font-bold uppercase tracking-widest flex flex-col items-center gap-1 shadow-lg active:scale-95 transition-all"
+                    >
+                      <CreditCard size={14} /> Débito
+                    </button>
+                    <button 
+                      onClick={() => handlePayment('credito')}
+                      className="bg-white/30 backdrop-blur-md text-white border border-white/40 py-3 rounded-2xl text-[9px] font-bold uppercase tracking-widest flex flex-col items-center gap-1 shadow-lg active:scale-95 transition-all"
+                    >
+                      <CreditCard size={14} /> Crédito
+                    </button>
+                    <button 
+                      onClick={() => handlePayment('pix')}
+                      className="bg-white text-[#D99489] py-3 rounded-2xl text-[9px] font-bold uppercase tracking-widest flex flex-col items-center gap-1 shadow-lg active:scale-95 transition-all"
+                    >
+                      <QrCode size={14} /> PIX
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {activeApp.paymentStatus === 'waiting_verification' && (
+                <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 flex items-center gap-3 border border-white/30">
+                  <div className="w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center animate-pulse">
+                    <RefreshCw size={16} className="text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[10px] font-bold uppercase tracking-widest">Aguardando Verificação</p>
+                    <p className="text-[9px] opacity-100">Ivone está confirmando seu pagamento...</p>
+                  </div>
+                </div>
+              )}
+            </div>
+            <Wind className="absolute -right-8 -bottom-8 opacity-10 text-white" size={160} />
+          </div>
+        </section>
+      )}
+
       {/* HERO */}
       <section className="bg-white dark:bg-zinc-900 border border-[#F5E6DA] dark:border-zinc-800 rounded-[3.5rem] p-8 shadow-sm relative overflow-hidden transition-colors">
         <div className="relative z-10 space-y-5">
@@ -75,7 +192,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
           <h2 className="text-4xl font-serif font-bold text-[#4A3B39] dark:text-white leading-[1] tracking-tighter">
             Oi, {user?.name.split(' ')[0]}
           </h2>
-          <p className="text-gray-400 dark:text-gray-500 text-sm max-w-[220px] leading-relaxed italic">
+          <p className="text-gray-600 dark:text-gray-400 text-sm max-w-[220px] leading-relaxed italic">
             {salonConfig.dynamicText.heroSubtitle}
           </p>
           
@@ -98,7 +215,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
         <div className="px-2 flex justify-between items-end">
           <div>
             <h3 className="text-xl font-serif font-bold dark:text-white">Mimos da Semana</h3>
-            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest italic">Preços Especiais</p>
+            <p className="text-[9px] text-gray-600 font-bold uppercase tracking-widest italic">Preços Especiais</p>
           </div>
           <Sparkles size={18} className="text-[#D4B499] animate-pulse" />
         </div>
@@ -122,10 +239,10 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
                        </div>
                        <div className="flex-1">
                          <h4 className="text-[11px] font-bold text-gray-800 dark:text-white uppercase">{offer.name}</h4>
-                         <p className="text-[9px] text-gray-400 italic">{offer.desc}</p>
+                         <p className="text-[9px] text-gray-600 italic">{offer.desc}</p>
                        </div>
                        <div className="text-right">
-                          <span className="bg-[#D4B499] text-white text-[11px] font-bold px-3 py-1.5 rounded-xl shadow-sm">R$ {offer.price}</span>
+                          <span className="bg-[#D4B499] text-studio-ink text-[11px] font-bold px-3 py-1.5 rounded-xl shadow-sm">R$ {offer.price}</span>
                        </div>
                      </button>
                    );
@@ -140,7 +257,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
       <section className="space-y-6">
         <div className="px-2">
           <h3 className="text-xl font-serif font-bold dark:text-white">Studio Protocols</h3>
-          <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">Catálogo Completo</p>
+          <p className="text-[9px] text-gray-600 uppercase tracking-widest font-bold">Catálogo Completo</p>
         </div>
         
         <div className="grid grid-cols-3 gap-3">
@@ -163,7 +280,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
       <section className="space-y-6">
         <div className="px-2">
           <h3 className="text-xl font-serif font-bold dark:text-white">Visite nosso espaço</h3>
-          <p className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">Studio Protocols</p>
+          <p className="text-[9px] text-gray-600 uppercase tracking-widest font-bold">Studio Protocols</p>
         </div>
         
         <div className="bg-white dark:bg-zinc-900 border border-[#F5E6DA] dark:border-zinc-800 rounded-[2.5rem] p-6 shadow-sm space-y-4">
@@ -173,14 +290,14 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
             </div>
             <div className="space-y-1">
               <p className="text-[11px] font-bold text-gray-800 dark:text-white uppercase tracking-tight">Endereço</p>
-              <p className="text-[10px] text-gray-500 dark:text-gray-400 leading-relaxed">
+              <p className="text-[10px] text-gray-700 dark:text-gray-400 leading-relaxed">
                 {SALON_INFO.address}
               </p>
             </div>
           </div>
           <button 
             onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(SALON_INFO.address)}`, '_blank')}
-            className="w-full bg-[#FAF7F5] dark:bg-zinc-800 text-[#D4B499] py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#D4B499] hover:text-white transition-all"
+            className="w-full bg-[#FAF7F5] dark:bg-zinc-800 text-[#D4B499] py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-[#D4B499] hover:text-studio-ink transition-all"
           >
             Ver no Google Maps <ArrowUpRight size={14} />
           </button>

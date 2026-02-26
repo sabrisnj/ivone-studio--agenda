@@ -2,7 +2,7 @@
 import React from 'react';
 import { useApp } from '../store';
 // Added Ticket to the imports to fix the "Cannot find name 'Ticket'" error
-import { Award, Sparkles, Scissors, Footprints, Gift, Share2, Users, Copy, CheckCircle2, Clock, HelpCircle, Ticket } from 'lucide-react';
+import { Award, Sparkles, Scissors, Footprints, Gift, Share2, Users, Copy, CheckCircle2, Clock, HelpCircle, Ticket, Instagram } from 'lucide-react';
 
 const PointsView: React.FC = () => {
   const { user, speak } = useApp();
@@ -16,15 +16,15 @@ const PointsView: React.FC = () => {
   ];
 
   const handleShare = async () => {
-    const text = `Oi! Adorei o Studio Ivone! Use meu código ${user.referralCode} ao baixar o app e ganhe 10% de desconto no seu primeiro serviço! 💖`;
+    const text = `Oi! Adorei o Studio Ivone! Use meu código ${user.referralCode} ao baixar o app e ganhe 10% de desconto no seu primeiro serviço! 💖\n\nPoste sua experiência e marque @ivonehairstudio para ganhar +2% OFF extra! 📸✨`;
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Presente Studio Ivone', text: text, url: window.location.href });
       } catch (err) { console.log(err); }
     } else {
       navigator.clipboard.writeText(text);
-      speak("Código de indicação copiado!");
-      alert('Código copiado para sua área de transferência!');
+      speak("Código de indicação e convite social copiados!");
+      alert('Código e convite social copiados para sua área de transferência!');
     }
   };
 
@@ -37,6 +37,26 @@ const PointsView: React.FC = () => {
         <h2 className="text-4xl font-serif font-medium text-studio-ink dark:text-white tracking-tight">Clube de Pontos</h2>
         <p className="text-sm text-stone-400 font-serif italic">Acumule serviços e ganhe mimos premium</p>
       </header>
+
+      {/* Social Media Star Voucher */}
+      <section className="bg-white dark:bg-stone-900 border border-studio-accent/20 p-6 rounded-[2.5rem] shadow-sm space-y-4 relative overflow-hidden">
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="w-12 h-12 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-2xl flex items-center justify-center">
+            <Instagram size={24} />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-bold text-studio-ink dark:text-white uppercase tracking-tight">Social Media Star</h3>
+            <p className="text-[10px] text-stone-500 font-medium">Ganhe 2% OFF Extra</p>
+          </div>
+          <div className="bg-rose-500 text-white text-[10px] font-black px-3 py-1 rounded-full">
+            NOVO
+          </div>
+        </div>
+        <p className="text-[11px] text-stone-600 dark:text-stone-400 italic leading-relaxed relative z-10">
+          Poste uma foto ou story do seu resultado, marque <span className="font-bold text-rose-500">@ivonehairstudio</span> e mostre para a Ivone no checkout para validar seu desconto de 2%!
+        </p>
+        <Sparkles className="absolute -right-4 -bottom-4 text-rose-500/10" size={100} />
+      </section>
 
       {/* Seção Indique e Ganhe Validada */}
       <section className="bg-gradient-to-br from-studio-sage to-emerald-600 p-8 rounded-[3rem] text-white shadow-2xl shadow-studio-sage/20 relative overflow-hidden group" aria-labelledby="referral-title">

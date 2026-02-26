@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User, Appointment, Voucher, AppNotification, ChatMessage, ServiceCategory, AccessibilityConfig, SalonConfig, Service, ClientPreferences, GalleryItem, GalleryCategory, WeeklyOffer } from './types';
 import { MOCK_VOUCHERS, SERVICES as INITIAL_SERVICES, WEEKLY_OFFERS as INITIAL_OFFERS } from './constants';
 
@@ -29,7 +29,8 @@ interface AppState {
   updateUserData: (data: Partial<User>) => void;
   sendChatMessage: (text: string, sender: 'client' | 'admin', targetUserId?: string) => void;
   markChatAsRead: (userId: string, reader: 'client' | 'admin') => void;
-  performCheckIn: (id: string) => void;
+  performCheckIn: (id: string, photoUrl?: string) => void;
+  payAppointment: (id: string, method: 'debito' | 'credito' | 'pix') => void;
   speak: (text: string) => void;
   rateAppointment: (id: string, rating: number, comment?: string) => void;
   sendNotification: (title: string, body: string, type: AppNotification['type']) => void;
@@ -190,7 +191,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('ivone_gallery', JSON.stringify(galleryItems));
   }, [galleryItems]);
 
-  const speak = (text: string) => {
+  const speak = useCallback((text: string) => {
     if ('speechSynthesis' in window && accessibility.readAloud) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
@@ -199,9 +200,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       utterance.pitch = accessibility.speechPitch;
       window.speechSynthesis.speak(utterance);
     }
-  };
+  }, [accessibility.readAloud, accessibility.speechRate, accessibility.speechPitch]);
 
-  const login = (name: string, phone: string, birthDate: string = '', referralCode?: string) => {
+  const login = useCallback((name: string, phone: string, birthDate: string = '', referralCode?: string) => {
     const myCode = `IVONE-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
     const newUser: User = { 
         id: phone, name, phone, birthDate, 
@@ -219,13 +220,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return [...prev, newUser];
     });
     speak(`Bem-vinda, ${name.split(' ')[0]}.`);
-  };
+  }, [speak]);
 
-  const logout = () => { setUser(null); setIsAdmin(false); localStorage.removeItem('ivone_user'); };
+  const logout = useCallback(() => { setUser(null); setIsAdmin(false); localStorage.removeItem('ivone_user'); }, []);
   
-  const toggleAdmin = () => setIsAdmin(!isAdmin);
+  const toggleAdmin = useCallback(() => setIsAdmin(prev => !prev), []);
 
-  const sendNotification = (title: string, body: string, type: AppNotification['type']) => {
+  const sendNotification = useCallback((title: string, body: string, type: AppNotification['type']) => {
     const id = Math.random().toString(36).substr(2, 9);
     const newNotif: AppNotification = { id, title, body, timestamp: new Date(), read: false, type };
     setNotifications(prev => [newNotif, ...prev]);
@@ -233,26 +234,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if ("Notification" in window && window.Notification.permission === "granted") {
       new window.Notification(title, { body });
     }
-  };
+  }, []);
 
-  const confirmAppointment = (id: string) => {
+  const confirmAppointment = useCallback((id: string) => {
     setAppointments(prev => {
       const updated = prev.map(a => a.id === id ? { ...a, status: 'confirmed' as const } : a);
       const app = updated.find(a => a.id === id);
       if (app) {
-        const service = services.find(s => s.id === app.serviceId);
-        const dateFormatted = app.date.split('-').reverse().join('/');
         sendNotification(
-          "Horário Confirmado! 💖",
-          `Olá ${app.clientName}, seu agendamento para ${service?.name} em ${dateFormatted} às ${app.time} foi aceito pela Ivone.`,
+          "Horário Confirmado! 💄✨",
+          "Seu horário foi confirmado! Aguardamos você no Ivone Studio 💄✨",
           'schedule'
         );
       }
       return updated;
     });
-  };
+  }, [sendNotification]);
 
-  const addGalleryItem = (imageUrl: string, category: GalleryCategory) => {
+  const addGalleryItem = useCallback((imageUrl: string, category: GalleryCategory) => {
     const newItem: GalleryItem = {
       id: Math.random().toString(36).substr(2, 9),
       imageUrl,
@@ -260,118 +259,199 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: new Date().toISOString()
     };
     setGalleryItems(prev => [newItem, ...prev]);
-  };
+  }, []);
 
-  const deleteGalleryItem = (id: string) => {
+  const deleteGalleryItem = useCallback((id: string) => {
     setGalleryItems(prev => prev.filter(item => item.id !== id));
-  };
+  }, []);
 
-  const requestPushPermission = () => {
+  const requestPushPermission = useCallback(() => {
     if ("Notification" in window) {
       window.Notification.requestPermission().then(permission => {
         if (permission === "granted") speak("Notificações push ativadas.");
       });
     }
-  };
+  }, [speak]);
 
-  const addAppointment = (app: Omit<Appointment, 'id' | 'status' | 'paymentStatus' | 'reminderSent' | 'createdAt' | 'checkInStatus'>, isAdminDirect = false) => {
+  const addAppointment = useCallback((app: Omit<Appointment, 'id' | 'status' | 'paymentStatus' | 'reminderSent' | 'createdAt' | 'checkInStatus'>, isAdminDirect = false) => {
     const id = Math.random().toString(36).substr(2, 9);
     const newApp: Appointment = { ...app, id, status: isAdminDirect ? 'confirmed' : 'pending', paymentStatus: 'unpaid', checkInStatus: 'none', createdAt: new Date().toISOString() };
     setAppointments(prev => [...prev, newApp]);
+    
+    if (!isAdminDirect) {
+      sendNotification(
+        "Agendamento Recebido! 📥",
+        "Seu agendamento foi recebido e está aguardando confirmação.",
+        'schedule'
+      );
+    } else {
+      sendNotification(
+        "Novo Agendamento! ✨",
+        "Seu horário foi confirmado! Aguardamos você no Ivone Studio 💄✨",
+        'schedule'
+      );
+    }
+    
     return id;
-  };
+  }, [sendNotification]);
 
-  const cancelAppointment = (id: string) => {
+  const cancelAppointment = useCallback((id: string) => {
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'cancelled' as const } : a));
-  };
+  }, []);
 
-  const completeAppointment = (id: string) => {
+  const completeAppointment = useCallback((id: string) => {
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, status: 'completed' as const } : a));
-  };
+  }, []);
 
-  const updateAccessibility = (config: Partial<AccessibilityConfig>) => {
+  const updateAccessibility = useCallback((config: Partial<AccessibilityConfig>) => {
     setAccessibility(prev => ({ ...prev, ...config }));
-  };
+  }, []);
 
-  const updateUserData = (data: Partial<User>) => {
+  const updateUserData = useCallback((data: Partial<User>) => {
     setUser(prev => prev ? { ...prev, ...data } : null);
-  };
+  }, []);
 
-  const sendChatMessage = (text: string, sender: 'client' | 'admin', targetUserId?: string) => {
+  const sendChatMessage = useCallback((text: string, sender: 'client' | 'admin', targetUserId?: string) => {
     const userId = sender === 'client' ? user?.id : targetUserId;
     if (!userId) return;
     const newMessage: ChatMessage = { id: Date.now().toString(), userId, sender, text, timestamp: new Date(), read: false };
     setChatMessages(prev => [...prev, newMessage]);
-  };
+  }, [user?.id]);
 
-  const markNotificationsAsRead = () => {
+  const markNotificationsAsRead = useCallback(() => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-  };
+  }, []);
 
-  const deleteNotification = (id: string) => {
+  const deleteNotification = useCallback((id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
-  };
+  }, []);
 
-  const updateAppointmentPreferences = (id: string, prefs: ClientPreferences) => {
+  const updateAppointmentPreferences = useCallback((id: string, prefs: ClientPreferences) => {
     setAppointments(prev => prev.map(a => a.id === id ? { ...a, preferences: prefs } : a));
     if (prefs.saveToProfile && user) {
       updateUserData({ permanentPreferences: prefs });
     }
-  };
+  }, [user, updateUserData]);
 
-  const performCheckIn = (id: string) => {
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, checkInStatus: 'checked_in' as const, status: 'in_service' as const } : a));
+  const performCheckIn = useCallback((id: string, photoUrl?: string) => {
+    setAppointments(prev => {
+      const updated = prev.map(a => a.id === id ? { 
+        ...a, 
+        checkInStatus: 'checked_in' as const, 
+        status: 'in_service' as const,
+        checkInPhoto: photoUrl 
+      } : a);
+      
+      const app = updated.find(a => a.id === id);
+      if (app) {
+        sendNotification(
+          "Cliente no Salão! 📍",
+          `${app.clientName} acabou de fazer check-in no studio.`,
+          'schedule'
+        );
+        
+        // Notify user about payment options
+        setTimeout(() => {
+          sendNotification(
+            "Pagamento Disponível 💳",
+            "Você pode realizar o pagamento pelas opções abaixo: Débito, Crédito ou PIX.",
+            'schedule'
+          );
+        }, 2000);
+      }
+      
+      return updated;
+    });
     speak("Check-in realizado.");
-  };
+  }, [sendNotification, speak]);
 
-  const addService = (service: Omit<Service, 'id'>) => {
+  const payAppointment = useCallback((id: string, method: string) => {
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, paymentStatus: 'waiting_verification' as const } : a));
+    sendNotification(
+      "Pagamento em Processamento ⏳",
+      `Seu pagamento via ${method.toUpperCase()} foi enviado para verificação.`,
+      'schedule'
+    );
+  }, [sendNotification]);
+
+  const rateAppointment = useCallback((id: string, rating: number, comment?: string) => {
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, rating, ratingComment: comment } : a));
+    if (rating > 0) {
+      sendNotification("Obrigada pela Avaliação! ❤️", "Sua opinião é muito importante para nós.", 'news');
+    }
+  }, [sendNotification]);
+
+  const markChatAsRead = useCallback((userId: string, reader: 'client' | 'admin') => {
+    setChatMessages(prev => prev.map(m => 
+      m.userId === userId && m.sender !== reader ? { ...m, read: true } : m
+    ));
+  }, []);
+
+  const addService = useCallback((service: Omit<Service, 'id'>) => {
     const newService = { ...service, id: Math.random().toString(36).substr(2, 9) };
     setServices(prev => [...prev, newService]);
-  };
+  }, []);
 
-  const updateService = (id: string, service: Partial<Service>) => {
+  const updateService = useCallback((id: string, service: Partial<Service>) => {
     setServices(prev => prev.map(s => s.id === id ? { ...s, ...service } : s));
-  };
+  }, []);
 
-  const deleteService = (id: string) => {
+  const deleteService = useCallback((id: string) => {
     setServices(prev => prev.filter(s => s.id !== id));
-  };
+  }, []);
 
-  const updateVoucher = (id: string, voucher: Partial<Voucher>) => {
+  const updateVoucher = useCallback((id: string, voucher: Partial<Voucher>) => {
     setVouchers(prev => prev.map(v => v.id === id ? { ...v, ...voucher } : v));
-  };
+  }, []);
 
-  const confirmPayment = (id: string) => {
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, paymentStatus: 'paid' as const } : a));
-  };
+  const confirmPayment = useCallback((id: string) => {
+    setAppointments(prev => {
+      const updated = prev.map(a => a.id === id ? { 
+        ...a, 
+        paymentStatus: 'paid' as const,
+        status: 'completed' as const 
+      } : a);
+      
+      const app = updated.find(a => a.id === id);
+      if (app) {
+        sendNotification(
+          "Pagamento Confirmado! ✅",
+          "Pagamento confirmado. Obrigada por escolher o Ivone Studio 💖",
+          'schedule'
+        );
+      }
+      
+      return updated;
+    });
+  }, [sendNotification]);
 
-  const redeemVoucher = (id: string) => {
+  const redeemVoucher = useCallback((id: string) => {
     setVouchers(prev => prev.map(v => v.id === id ? { ...v, redeemed: v.redeemed + 1 } : v));
     sendNotification("Voucher Confirmado!", "Seu voucher foi validado com sucesso.", "promo");
-  };
+  }, [sendNotification]);
 
-  const updateSalonConfig = (config: Partial<SalonConfig>) => {
+  const updateSalonConfig = useCallback((config: Partial<SalonConfig>) => {
     setSalonConfig(prev => ({ ...prev, ...config }));
-  };
+  }, []);
 
-  const updateWeeklyOffer = (day: number, offer: Partial<WeeklyOffer>) => {
+  const updateWeeklyOffer = useCallback((day: number, offer: Partial<WeeklyOffer>) => {
     setWeeklyOffers(prev => prev.map(o => o.day === day ? { ...o, ...offer } : o));
-  };
+  }, []);
 
-  const updateUserPoints = (userId: string, points: User['points']) => {
+  const updateUserPoints = useCallback((userId: string, points: User['points']) => {
     setAllUsers(prev => prev.map(u => u.id === userId ? { ...u, points } : u));
     if (user?.id === userId) {
       setUser(prev => prev ? { ...prev, points } : null);
     }
-  };
+  }, [user?.id]);
 
   return (
     <AppContext.Provider value={{
       user, allUsers, appointments, vouchers, weeklyOffers, notifications, chatMessages, services, galleryItems, isAdmin, isBirthMonth, accessibility, salonConfig, isTyping: false,
       login, logout, toggleAdmin, addAppointment, confirmAppointment, cancelAppointment, completeAppointment,
       updateAccessibility, updateUserData, sendChatMessage, markNotificationsAsRead, deleteNotification,
-      performCheckIn, speak, rateAppointment: () => {}, sendNotification, requestPushPermission, updateAppointmentPreferences,
-      addGalleryItem, deleteGalleryItem, markChatAsRead: () => {},
+      performCheckIn, payAppointment, speak, rateAppointment, sendNotification, requestPushPermission, updateAppointmentPreferences,
+      addGalleryItem, deleteGalleryItem, markChatAsRead,
       addService, updateService, deleteService, updateVoucher, confirmPayment, redeemVoucher, updateSalonConfig, updateWeeklyOffer, updateUserPoints
     }}>
       {children}
