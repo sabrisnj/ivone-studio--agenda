@@ -334,79 +334,81 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ preselectedServiceId, onCle
                <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest leading-relaxed">Desenhe agora a sua experiência premium:</p>
              </div>
 
-             <div className="bg-gradient-to-br from-[#FAF7F5] to-white dark:from-zinc-900 dark:to-zinc-800 p-8 rounded-[3.5rem] border-2 border-[#D4B499] shadow-2xl space-y-10 animate-fade-up">
-               
-                <div className="bg-[#86BDB1]/10 p-6 rounded-3xl border-2 border-[#86BDB1]/20 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <Camera className="text-[#86BDB1]" size={20} />
-                    <p className="text-xs font-bold text-[#86BDB1] uppercase tracking-tighter">Check-in no Salão</p>
-                  </div>
-                  
-                  {!showPayment ? (
-                    <>
-                      <p className="text-[10px] text-gray-700 font-medium">Já está no studio? Faça seu check-in agora!</p>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button 
-                          onClick={handleSimpleCheckIn}
-                          className="bg-white text-[#86BDB1] py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all"
-                        >
-                          Estou Aqui
-                        </button>
-                        <button 
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={isCheckingIn}
-                          className="bg-[#86BDB1] text-studio-ink py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all disabled:opacity-50"
-                        >
-                          {isCheckingIn ? '...' : <><Camera size={14}/> Com Foto</>}
-                        </button>
-                      </div>
-                      <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        onChange={handlePhotoCheckIn} 
-                        accept="image/*" 
-                        capture="user" 
-                        className="hidden" 
-                      />
-                    </>
-                  ) : (
-                    <div className="space-y-4 animate-fade">
-                      <p className="text-[10px] text-[#86BDB1] font-bold uppercase tracking-widest">Check-in Realizado! Selecione o Pagamento:</p>
-                      {paymentDone ? (
-                        <div className="bg-white p-4 rounded-2xl flex items-center gap-3 border border-emerald-100">
-                          <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white">
-                            <Check size={16} />
-                          </div>
-                          <p className="text-[10px] font-bold text-emerald-600 uppercase">Pagamento Enviado!</p>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-3 gap-2">
-                          <button 
-                            onClick={() => handlePayment('debito')}
-                            className="bg-white border border-gray-100 p-3 rounded-xl flex flex-col items-center gap-1 shadow-sm active:scale-95 transition-all"
-                          >
-                            <CreditCard size={14} className="text-gray-600" />
-                            <span className="text-[8px] font-bold uppercase">Débito</span>
-                          </button>
-                          <button 
-                            onClick={() => handlePayment('credito')}
-                            className="bg-white border border-gray-100 p-3 rounded-xl flex flex-col items-center gap-1 shadow-sm active:scale-95 transition-all"
-                          >
-                            <CreditCard size={14} className="text-gray-600" />
-                            <span className="text-[8px] font-bold uppercase">Crédito</span>
-                          </button>
-                          <button 
-                            onClick={() => handlePayment('pix')}
-                            className="bg-[#86BDB1] text-studio-ink p-3 rounded-xl flex flex-col items-center gap-1 shadow-sm active:scale-95 transition-all"
-                          >
-                            <QrCode size={14} />
-                            <span className="text-[8px] font-bold uppercase">PIX</span>
-                          </button>
-                        </div>
-                      )}
+              <div className="bg-gradient-to-br from-[#FAF7F5] to-white dark:from-zinc-900 dark:to-zinc-800 p-8 rounded-[3.5rem] border-2 border-[#D4B499] shadow-2xl space-y-10 animate-fade-up">
+                
+                {selectedDate === today && (
+                  <div className="bg-[#86BDB1]/10 p-6 rounded-3xl border-2 border-[#86BDB1]/20 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <Camera className="text-[#86BDB1]" size={20} />
+                      <p className="text-xs font-bold text-[#86BDB1] uppercase tracking-tighter">Check-in no Salão</p>
                     </div>
-                  )}
-               </div>
+                    
+                    {!showPayment ? (
+                      <>
+                        <p className="text-[10px] text-gray-700 font-medium">Já está no studio? Faça seu check-in agora!</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button 
+                            onClick={handleSimpleCheckIn}
+                            className="bg-white text-[#86BDB1] py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all"
+                          >
+                            Estou Aqui
+                          </button>
+                          <button 
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isCheckingIn}
+                            className="bg-[#86BDB1] text-studio-ink py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all disabled:opacity-50"
+                          >
+                            {isCheckingIn ? '...' : <><Camera size={14}/> Com Foto</>}
+                          </button>
+                        </div>
+                        <input 
+                          type="file" 
+                          ref={fileInputRef} 
+                          onChange={handlePhotoCheckIn} 
+                          accept="image/*" 
+                          capture="user" 
+                          className="hidden" 
+                        />
+                      </>
+                    ) : (
+                      <div className="space-y-4 animate-fade">
+                        <p className="text-[10px] text-[#86BDB1] font-bold uppercase tracking-widest">Check-in Realizado! Selecione o Pagamento:</p>
+                        {paymentDone ? (
+                          <div className="bg-white p-4 rounded-2xl flex items-center gap-3 border border-emerald-100">
+                            <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white">
+                              <Check size={16} />
+                            </div>
+                            <p className="text-[10px] font-bold text-emerald-600 uppercase">Pagamento Enviado!</p>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-3 gap-2">
+                            <button 
+                              onClick={() => handlePayment('debito')}
+                              className="bg-white border border-gray-100 p-3 rounded-xl flex flex-col items-center gap-1 shadow-sm active:scale-95 transition-all"
+                            >
+                              <CreditCard size={14} className="text-gray-600" />
+                              <span className="text-[8px] font-bold uppercase">Débito</span>
+                            </button>
+                            <button 
+                              onClick={() => handlePayment('credito')}
+                              className="bg-white border border-gray-100 p-3 rounded-xl flex flex-col items-center gap-1 shadow-sm active:scale-95 transition-all"
+                            >
+                              <CreditCard size={14} className="text-gray-600" />
+                              <span className="text-[8px] font-bold uppercase">Crédito</span>
+                            </button>
+                            <button 
+                              onClick={() => handlePayment('pix')}
+                              className="bg-[#86BDB1] text-studio-ink p-3 rounded-xl flex flex-col items-center gap-1 shadow-sm active:scale-95 transition-all"
+                            >
+                              <QrCode size={14} />
+                              <span className="text-[8px] font-bold uppercase">PIX</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                <div className="bg-[#86BDB1]/10 p-6 rounded-3xl border-2 border-[#86BDB1]/20 space-y-4">
                   <div className="flex items-center gap-3">

@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { GoogleGenAI } from "@google/genai";
 import { User, Appointment, Voucher, AppNotification, ChatMessage, ServiceCategory, AccessibilityConfig, SalonConfig, Service, ClientPreferences, GalleryItem, GalleryCategory, WeeklyOffer } from './types';
 import { MOCK_VOUCHERS, SERVICES as INITIAL_SERVICES, WEEKLY_OFFERS as INITIAL_OFFERS } from './constants';
 
@@ -27,6 +28,8 @@ interface AppState {
   completeAppointment: (id: string) => void;
   updateAccessibility: (config: Partial<AccessibilityConfig>) => void;
   updateUserData: (data: Partial<User>) => void;
+  acceptTerms: () => void;
+  sendFeedback: (text: string) => void;
   sendChatMessage: (text: string, sender: 'client' | 'admin', targetUserId?: string) => void;
   markChatAsRead: (userId: string, reader: 'client' | 'admin') => void;
   performCheckIn: (id: string, photoUrl?: string) => void;
@@ -107,6 +110,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isBirthMonth, setIsBirthMonth] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
 
   const [salonConfig, setSalonConfig] = useState<SalonConfig>(() => {
     const saved = localStorage.getItem('ivone_config');
@@ -134,6 +138,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         primary: '#D99489',
         secondary: '#86BDB1',
         accent: '#8B5E3C'
+      },
+      professionals: {
+        prof1_nome: 'Ivone',
+        prof1_whats: '5511997308578',
+        prof2_nome: 'Bia',
+        prof2_whats: '5511985807495',
+        prof3_nome: 'Edinete',
+        prof3_whats: '5511952040382',
       }
     };
   });
@@ -202,7 +214,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [accessibility.readAloud, accessibility.speechRate, accessibility.speechPitch]);
 
-  const login = useCallback((name: string, phone: string, birthDate: string = '', referralCode?: string) => {
+  const login = useCallback((name: string, phone: string, birthDate: string = '', referralCode?: string, termsAccepted: boolean = false) => {
     const myCode = `IVONE-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
     const newUser: User = { 
         id: phone, name, phone, birthDate, 
@@ -211,12 +223,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         referrals: [],
         rewards: [], 
         points: { escovas: 0, manicurePedicure: 0, ciliosManutencao: 0 }, 
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        termsAccepted
     };
     setUser(newUser);
     setAllUsers(prev => {
       const exists = prev.find(u => u.id === phone);
-      if (exists) return prev.map(u => u.id === phone ? { ...u, name, birthDate } : u);
+      if (exists) return prev.map(u => u.id === phone ? { ...u, name, birthDate, termsAccepted: u.termsAccepted || termsAccepted } : u);
       return [...prev, newUser];
     });
     speak(`Bem-vinda, ${name.split(' ')[0]}.`);
@@ -309,7 +322,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateUserData = useCallback((data: Partial<User>) => {
     setUser(prev => prev ? { ...prev, ...data } : null);
-  }, []);
+    setAllUsers(prev => prev.map(u => u.id === user?.id ? { ...u, ...data } : u));
+  }, [user?.id]);
+
+  const acceptTerms = useCallback(() => {
+    updateUserData({ termsAccepted: true });
+  }, [updateUserData]);
+
+  const sendFeedback = useCallback((text: string) => {
+    if (!user) return;
+    const feedbackNotification: AppNotification = {
+      id: Date.now().toString(),
+      title: 'Nova Reclamação/Sugestão',
+      body: `De: ${user.name}\n${text}`,
+      type: 'promo',
+      timestamp: new Date(),
+      read: false
+    };
+    setNotifications(prev => [feedbackNotification, ...prev]);
+    speak("Agradecemos seu feedback. Nossa equipe foi notificada.");
+  }, [user, speak]);
 
   const sendChatMessage = useCallback((text: string, sender: 'client' | 'admin', targetUserId?: string) => {
     const userId = sender === 'client' ? user?.id : targetUserId;
@@ -447,9 +479,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   return (
     <AppContext.Provider value={{
-      user, allUsers, appointments, vouchers, weeklyOffers, notifications, chatMessages, services, galleryItems, isAdmin, isBirthMonth, accessibility, salonConfig, isTyping: false,
+      user, allUsers, appointments, vouchers, weeklyOffers, notifications, chatMessages, services, galleryItems, isAdmin, isBirthMonth, accessibility, salonConfig, isTyping,
       login, logout, toggleAdmin, addAppointment, confirmAppointment, cancelAppointment, completeAppointment,
-      updateAccessibility, updateUserData, sendChatMessage, markNotificationsAsRead, deleteNotification,
+      updateAccessibility, updateUserData, acceptTerms, sendFeedback, sendChatMessage, markNotificationsAsRead, deleteNotification,
       performCheckIn, payAppointment, speak, rateAppointment, sendNotification, requestPushPermission, updateAppointmentPreferences,
       addGalleryItem, deleteGalleryItem, markChatAsRead,
       addService, updateService, deleteService, updateVoucher, confirmPayment, redeemVoucher, updateSalonConfig, updateWeeklyOffer, updateUserPoints

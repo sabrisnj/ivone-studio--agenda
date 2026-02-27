@@ -19,6 +19,7 @@ import {
   Heart,
   Wind,
   Plus,
+  Calendar,
   MapPin,
   ArrowUpRight,
   CheckCircle2,
@@ -268,7 +269,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
               className="bg-white dark:bg-zinc-900 border border-[#F5E6DA] dark:border-zinc-800 rounded-2xl p-4 flex flex-col items-center text-center gap-3 shadow-sm active:scale-[0.97] transition-all group"
             >
               <div className="w-12 h-12 bg-[#FAF7F5] dark:bg-zinc-800 text-[#D4B499] rounded-xl flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform">
-                 <Plus size={20} />
+                 <Calendar size={20} />
               </div>
               <h4 className="text-[9px] font-bold dark:text-white uppercase tracking-wider">{service.name}</h4>
             </button>
@@ -289,9 +290,12 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
               <MapPin size={20} />
             </div>
             <div className="space-y-1">
-              <p className="text-[11px] font-bold text-gray-800 dark:text-white uppercase tracking-tight">Endereço</p>
+              <p className="text-[11px] font-bold text-gray-800 dark:text-white uppercase tracking-tight">Endereço & Horário</p>
               <p className="text-[10px] text-gray-700 dark:text-gray-400 leading-relaxed">
                 {SALON_INFO.address}
+              </p>
+              <p className="text-[10px] text-studio-accent font-bold">
+                {SALON_INFO.hours}
               </p>
             </div>
           </div>

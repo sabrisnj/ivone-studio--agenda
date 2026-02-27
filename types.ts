@@ -44,6 +44,7 @@ export interface User {
   };
   createdAt: string;
   permanentPreferences?: ClientPreferences;
+  termsAccepted?: boolean;
 }
 
 export interface ClientPreferences {
@@ -112,6 +113,14 @@ export interface SalonConfig {
     primary: string;
     secondary: string;
     accent: string;
+  };
+  professionals: {
+    prof1_nome: string;
+    prof1_whats: string;
+    prof2_nome: string;
+    prof2_whats: string;
+    prof3_nome: string;
+    prof3_whats: string;
   };
 }
 

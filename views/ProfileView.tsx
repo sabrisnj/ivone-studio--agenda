@@ -5,24 +5,52 @@ import { TERMS_TEXT } from '../constants';
 import { 
   LogOut, Moon, Sun, Type, Volume2, Award, 
   ShieldCheck, CheckCircle, Contrast, Settings, Info,
-  User as UserIcon, Calendar, Phone, Save
+  User as UserIcon, Calendar, Phone, Save, ChevronDown, ChevronUp,
+  Bell, Coffee, HeartPulse, Thermometer, Zap, Droplets, UserCheck, Activity,
+  MessageSquare, Send
 } from 'lucide-react';
+import { ClientPreferences } from '../types';
 
 const ProfileView: React.FC = () => {
-  const { user, logout, accessibility, updateAccessibility, updateUserData, speak } = useApp();
+  const { user, logout, accessibility, updateAccessibility, updateUserData, acceptTerms, sendFeedback, speak, requestPushPermission } = useApp();
   
   const [activeSection, setActiveSection] = useState<'settings' | 'data' | 'policies'>('settings');
+  const [isAcessibilidadeOpen, setIsAcessibilidadeOpen] = useState(false);
   const [editName, setEditName] = useState(user?.name || '');
   const [editBirth, setEditBirth] = useState(user?.birthDate || '');
   const [isSaved, setIsSaved] = useState(false);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [feedbackSent, setFeedbackSent] = useState(false);
+
+  const [ritualPrefs, setRitualPrefs] = useState<ClientPreferences>(user?.permanentPreferences || {
+    environment: 'none',
+    refreshment: 'Nada',
+    health: { alergias: '', cheiro: '', aguaTemp: 'Morna', outros: '' },
+    nails: { formato: 'none', pref: '' },
+    lashes: '',
+    hairExtra: 'none',
+    saveToProfile: true
+  });
 
   if (!user) return null;
 
   const handleSaveData = () => {
-    updateUserData({ name: editName, birthDate: editBirth });
+    updateUserData({ 
+      name: editName, 
+      birthDate: editBirth,
+      permanentPreferences: ritualPrefs 
+    });
     setIsSaved(true);
-    speak("Dados atualizados com sucesso.");
+    speak("Dados e preferências atualizados com sucesso.");
     setTimeout(() => setIsSaved(false), 3000);
+  };
+
+  const handleSendFeedback = () => {
+    if (!feedbackText.trim()) return;
+    sendFeedback(feedbackText);
+    setFeedbackText('');
+    setFeedbackSent(true);
+    setTimeout(() => setFeedbackSent(false), 5000);
   };
 
   return (
@@ -66,90 +94,216 @@ const ProfileView: React.FC = () => {
       </div>
 
       {activeSection === 'settings' && (
-        <div className="space-y-5 animate-studio-fade">
-          <button 
-            onClick={() => updateAccessibility({ darkMode: !accessibility.darkMode })}
-            className="w-full bg-white dark:bg-stone-900 p-6 rounded-[2.5rem] border border-stone-100 dark:border-stone-800 flex items-center justify-between shadow-sm active:scale-95 transition-all hover:border-studio-accent/20"
-          >
-            <div className="flex items-center gap-5">
-              <div className={`p-4 rounded-2xl ${accessibility.darkMode ? 'bg-studio-accent text-studio-ink' : 'bg-stone-50 text-stone-600'}`}>
-                {accessibility.darkMode ? <Sun size={24} /> : <Moon size={24} />}
-              </div>
-              <div className="text-left">
-                <p className="text-base font-bold dark:text-white tracking-tight">Modo Escuro</p>
-                <p className="text-[10px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">{accessibility.darkMode ? 'Ativado' : 'Desativado'}</p>
-              </div>
-            </div>
-            <div className={`w-14 h-7 rounded-full p-1 transition-colors ${accessibility.darkMode ? 'bg-studio-accent' : 'bg-stone-200'}`}>
-              <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform ${accessibility.darkMode ? 'translate-x-7' : 'translate-x-0'}`} />
-            </div>
-          </button>
-
-          <button 
-            onClick={() => updateAccessibility({ highContrast: !accessibility.highContrast })}
-            className="w-full bg-white dark:bg-stone-900 p-6 rounded-[2.5rem] border border-stone-100 dark:border-stone-800 flex items-center justify-between shadow-sm active:scale-95 transition-all hover:border-studio-accent/20"
-          >
-            <div className="flex items-center gap-5">
-              <div className={`p-4 rounded-2xl ${accessibility.highContrast ? 'bg-studio-ink text-studio-gold' : 'bg-stone-50 text-stone-600'}`}>
-                <Contrast size={24} />
-              </div>
-              <div className="text-left">
-                <p className="text-base font-bold dark:text-white tracking-tight">Alto Contraste</p>
-                <p className="text-[10px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">Leitura Otimizada</p>
-              </div>
-            </div>
-            <div className={`w-14 h-7 rounded-full p-1 transition-colors ${accessibility.highContrast ? 'bg-studio-ink' : 'bg-stone-200'}`}>
-              <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform ${accessibility.highContrast ? 'translate-x-7' : 'translate-x-0'}`} />
-            </div>
-          </button>
-
-          <button 
-            onClick={() => updateAccessibility({ fontSize: accessibility.fontSize === 100 ? 125 : 100 })}
-            className="w-full bg-white dark:bg-stone-900 p-6 rounded-[2.5rem] border border-stone-100 dark:border-stone-800 flex items-center justify-between shadow-sm active:scale-95 transition-all hover:border-studio-accent/20"
-          >
-            <div className="flex items-center gap-5">
-              <div className={`p-4 rounded-2xl ${accessibility.fontSize > 100 ? 'bg-studio-accent text-studio-ink' : 'bg-stone-50 text-stone-600'}`}>
-                <Type size={24} />
-              </div>
-              <div className="text-left">
-                <p className="text-base font-bold dark:text-white tracking-tight">Tamanho da Fonte</p>
-                <p className="text-[10px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">{accessibility.fontSize === 100 ? 'Normal' : 'Ampliado (A+)'}</p>
-              </div>
-            </div>
-            <div className={`w-14 h-7 rounded-full p-1 transition-colors ${accessibility.fontSize > 100 ? 'bg-studio-accent' : 'bg-stone-200'}`}>
-              <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform ${accessibility.fontSize > 100 ? 'translate-x-7' : 'translate-x-0'}`} />
-            </div>
-          </button>
-
-          <div className="bg-white dark:bg-stone-900 p-8 rounded-[3rem] border border-stone-100 dark:border-stone-800 space-y-8 shadow-sm">
-            <div className="flex items-center justify-between">
+        <div className="space-y-6 animate-studio-fade">
+          {/* Menu de Acessibilidade */}
+          <div className="bg-white dark:bg-stone-900 rounded-[2.5rem] border border-stone-100 dark:border-stone-800 overflow-hidden shadow-sm">
+            <button 
+              onClick={() => setIsAcessibilidadeOpen(!isAcessibilidadeOpen)}
+              className="w-full p-6 flex items-center justify-between hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
+            >
               <div className="flex items-center gap-5">
-                <div className={`p-4 rounded-2xl ${accessibility.readAloud ? 'bg-studio-sage text-studio-ink' : 'bg-stone-50 text-stone-600'}`}>
-                  <Volume2 size={24} />
+                <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800 text-studio-accent">
+                  <Settings size={24} />
                 </div>
                 <div className="text-left">
-                  <p className="text-base font-bold dark:text-white tracking-tight">Narração (Ivone Voice)</p>
-                  <p className="text-[10px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">Assistente Virtual</p>
+                  <p className="text-base font-bold dark:text-white tracking-tight">Acessibilidade</p>
+                  <p className="text-[10px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">Personalize sua experiência</p>
                 </div>
               </div>
-              <button 
-                onClick={() => updateAccessibility({ readAloud: !accessibility.readAloud })}
-                className={`w-14 h-7 rounded-full p-1 transition-colors ${accessibility.readAloud ? 'bg-studio-sage' : 'bg-stone-200'}`}
-              >
-                <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform ${accessibility.readAloud ? 'translate-x-7' : 'translate-x-0'}`} />
-              </button>
-            </div>
-            {accessibility.readAloud && (
-              <div className="space-y-5 pt-6 border-t border-stone-50 dark:border-stone-800">
-                <div className="space-y-3">
-                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-stone-600">
-                    <span>Velocidade</span>
-                    <span className="text-studio-sage">{accessibility.speechRate}x</span>
+              {isAcessibilidadeOpen ? <ChevronUp size={20} className="text-stone-400" /> : <ChevronDown size={20} className="text-stone-400" />}
+            </button>
+
+            {isAcessibilidadeOpen && (
+              <div className="p-6 pt-0 space-y-4 animate-studio-fade">
+                <button 
+                  onClick={() => updateAccessibility({ darkMode: !accessibility.darkMode })}
+                  className="w-full bg-stone-50 dark:bg-stone-800/50 p-4 rounded-2xl flex items-center justify-between active:scale-95 transition-all"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-xl ${accessibility.darkMode ? 'bg-studio-accent text-studio-ink' : 'bg-white dark:bg-stone-800 text-stone-600'}`}>
+                      {accessibility.darkMode ? <Sun size={20} /> : <Moon size={20} />}
+                    </div>
+                    <p className="text-sm font-bold dark:text-white">Modo Escuro</p>
                   </div>
-                  <input type="range" min="0.5" max="2" step="0.1" value={accessibility.speechRate} onChange={e => updateAccessibility({ speechRate: parseFloat(e.target.value) })} className="w-full accent-studio-sage" />
+                  <div className={`w-12 h-6 rounded-full p-1 transition-colors ${accessibility.darkMode ? 'bg-studio-accent' : 'bg-stone-200'}`}>
+                    <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-transform ${accessibility.darkMode ? 'translate-x-6' : 'translate-x-0'}`} />
+                  </div>
+                </button>
+
+                <button 
+                  onClick={() => updateAccessibility({ highContrast: !accessibility.highContrast })}
+                  className="w-full bg-stone-50 dark:bg-stone-800/50 p-4 rounded-2xl flex items-center justify-between active:scale-95 transition-all"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-xl ${accessibility.highContrast ? 'bg-studio-ink text-studio-gold' : 'bg-white dark:bg-stone-800 text-stone-600'}`}>
+                      <Contrast size={20} />
+                    </div>
+                    <p className="text-sm font-bold dark:text-white">Alto Contraste</p>
+                  </div>
+                  <div className={`w-12 h-6 rounded-full p-1 transition-colors ${accessibility.highContrast ? 'bg-studio-ink' : 'bg-stone-200'}`}>
+                    <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-transform ${accessibility.highContrast ? 'translate-x-6' : 'translate-x-0'}`} />
+                  </div>
+                </button>
+
+                <button 
+                  onClick={() => updateAccessibility({ fontSize: accessibility.fontSize === 100 ? 125 : 100 })}
+                  className="w-full bg-stone-50 dark:bg-stone-800/50 p-4 rounded-2xl flex items-center justify-between active:scale-95 transition-all"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`p-3 rounded-xl ${accessibility.fontSize > 100 ? 'bg-studio-accent text-studio-ink' : 'bg-white dark:bg-stone-800 text-stone-600'}`}>
+                      <Type size={20} />
+                    </div>
+                    <p className="text-sm font-bold dark:text-white">Tamanho da Fonte</p>
+                  </div>
+                  <div className={`w-12 h-6 rounded-full p-1 transition-colors ${accessibility.fontSize > 100 ? 'bg-studio-accent' : 'bg-stone-200'}`}>
+                    <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-transform ${accessibility.fontSize > 100 ? 'translate-x-6' : 'translate-x-0'}`} />
+                  </div>
+                </button>
+
+                <div className="bg-stone-50 dark:bg-stone-800/50 p-4 rounded-2xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-3 rounded-xl ${accessibility.readAloud ? 'bg-studio-sage text-studio-ink' : 'bg-white dark:bg-stone-800 text-stone-600'}`}>
+                        <Volume2 size={20} />
+                      </div>
+                      <p className="text-sm font-bold dark:text-white">Narração</p>
+                    </div>
+                    <button 
+                      onClick={() => updateAccessibility({ readAloud: !accessibility.readAloud })}
+                      className={`w-12 h-6 rounded-full p-1 transition-colors ${accessibility.readAloud ? 'bg-studio-sage' : 'bg-stone-200'}`}
+                    >
+                      <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-transform ${accessibility.readAloud ? 'translate-x-6' : 'translate-x-0'}`} />
+                    </button>
+                  </div>
+                  {accessibility.readAloud && (
+                    <div className="pt-2 border-t border-stone-100 dark:border-stone-700 space-y-2">
+                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-stone-600">
+                        <span>Velocidade</span>
+                        <span className="text-studio-sage">{accessibility.speechRate}x</span>
+                      </div>
+                      <input type="range" min="0.5" max="2" step="0.1" value={accessibility.speechRate} onChange={e => updateAccessibility({ speechRate: parseFloat(e.target.value) })} className="w-full accent-studio-sage" />
+                    </div>
+                  )}
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Notificações Inteligentes */}
+          <button 
+            onClick={requestPushPermission}
+            className="w-full bg-white dark:bg-stone-900 p-6 rounded-[2.5rem] border border-stone-100 dark:border-stone-800 flex items-center justify-between shadow-sm active:scale-95 transition-all hover:border-studio-accent/20"
+          >
+            <div className="flex items-center gap-5">
+              <div className="p-4 rounded-2xl bg-studio-sage/10 text-studio-sage">
+                <Bell size={24} />
+              </div>
+              <div className="text-left">
+                <p className="text-base font-bold dark:text-white tracking-tight">Notificações Inteligentes</p>
+                <p className="text-[10px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">Alertas Ativos</p>
+              </div>
+            </div>
+            <Zap size={20} className="text-studio-sage animate-pulse" />
+          </button>
+
+          {/* Preferências do Ritual */}
+          <div className="bg-white dark:bg-stone-900 p-8 rounded-[3rem] border border-stone-100 dark:border-stone-800 space-y-8 shadow-sm">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-5">
+                <div className={`p-4 rounded-2xl ${ritualPrefs.saveToProfile ? 'bg-studio-accent text-studio-ink' : 'bg-stone-50 text-stone-600'}`}>
+                  <UserCheck size={24} />
+                </div>
+                <div className="text-left">
+                  <p className="text-base font-bold dark:text-white tracking-tight">Memorizar Perfil?</p>
+                  <p className="text-[10px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">Preferências Permanentes</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setRitualPrefs({...ritualPrefs, saveToProfile: !ritualPrefs.saveToProfile})}
+                className={`w-14 h-7 rounded-full p-1 transition-colors ${ritualPrefs.saveToProfile ? 'bg-studio-accent' : 'bg-stone-200'}`}
+              >
+                <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform ${ritualPrefs.saveToProfile ? 'translate-x-7' : 'translate-x-0'}`} />
+              </button>
+            </div>
+
+            <div className="space-y-4 pt-6 border-t border-stone-50 dark:border-stone-800">
+              <label className="text-[10px] font-bold text-stone-600 uppercase tracking-widest flex items-center gap-2"><Coffee size={14}/> Menu de Bebidas</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  {id: 'Café Quente', label: '☕ Café Quente'},
+                  {id: 'Café Morno', label: '☕ Café Morno'},
+                  {id: 'Chá Quente', label: '🍵 Chá Quente'},
+                  {id: 'Chá Morno', label: '🍵 Chá Morno'},
+                  {id: 'Água Fresca', label: '💧 Água Fresca'},
+                  {id: 'Água Gelada', label: '💧 Água Gelada'},
+                  {id: 'Nada', label: '🚫 Nada'}
+                ].map(item => (
+                  <button 
+                    key={item.id}
+                    onClick={() => setRitualPrefs({...ritualPrefs, refreshment: item.id as any})}
+                    className={`p-3 rounded-2xl text-[9px] font-bold border-2 transition-all ${ritualPrefs.refreshment === item.id ? 'bg-studio-accent border-studio-accent text-studio-ink shadow-lg' : 'bg-stone-50 dark:bg-stone-800 border-transparent text-stone-600'}`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-6 border-t border-stone-50 dark:border-stone-800">
+              <label className="text-[10px] font-bold text-stone-600 uppercase tracking-widest flex items-center gap-2"><Activity size={14}/> Saúde & Bem-estar</label>
+              <div className="grid gap-3">
+                <div className="grid grid-cols-2 gap-2">
+                  <input placeholder="Alergias..." value={ritualPrefs.health.alergias} onChange={e => setRitualPrefs({...ritualPrefs, health: {...ritualPrefs.health, alergias: e.target.value}})} className="p-4 bg-stone-50 dark:bg-stone-800 rounded-2xl text-[11px] border-2 border-transparent focus:border-studio-accent outline-none shadow-sm dark:text-white" />
+                  <input placeholder="Aromas..." value={ritualPrefs.health.cheiro} onChange={e => setRitualPrefs({...ritualPrefs, health: {...ritualPrefs.health, cheiro: e.target.value}})} className="p-4 bg-stone-50 dark:bg-stone-800 rounded-2xl text-[11px] border-2 border-transparent focus:border-studio-accent outline-none shadow-sm dark:text-white" />
+                </div>
+                <div className="bg-stone-50 dark:bg-stone-800 p-5 rounded-2xl flex items-center justify-between border border-stone-100 dark:border-stone-700 shadow-sm">
+                  <span className="text-[10px] font-bold text-stone-600 uppercase flex items-center gap-2"><Droplets size={12}/> Lavatório</span>
+                  <div className="flex gap-2">
+                    {['Quente', 'Morna', 'Fria'].map(t => (
+                      <button key={t} onClick={() => setRitualPrefs({...ritualPrefs, health: {...ritualPrefs.health, aguaTemp: t as any}})} className={`px-4 py-2 rounded-xl text-[9px] font-bold uppercase transition-all ${ritualPrefs.health.aguaTemp === t ? 'bg-studio-sage text-studio-ink shadow-md' : 'bg-white dark:bg-stone-700 text-stone-600'}`}>{t}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button 
+              onClick={handleSaveData}
+              className={`w-full py-5 rounded-[1.8rem] font-bold uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${isSaved ? 'bg-emerald-500 text-white' : 'bg-studio-accent text-studio-ink shadow-xl active:scale-95'}`}
+            >
+              {isSaved ? <CheckCircle size={18}/> : <Save size={18}/>}
+              {isSaved ? 'Preferências Salvas!' : 'Salvar Preferências'}
+            </button>
+          </div>
+
+          {/* Reclamações e Sugestões */}
+          <div className="bg-white dark:bg-stone-900 p-8 rounded-[3rem] border border-stone-100 dark:border-stone-800 space-y-6 shadow-sm">
+            <div className="flex items-center gap-5">
+              <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-900/20 text-rose-500">
+                <MessageSquare size={24} />
+              </div>
+              <div className="text-left">
+                <p className="text-base font-bold dark:text-white tracking-tight">Ouvidoria Ivone</p>
+                <p className="text-[10px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">Reclamações ou Sugestões</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <textarea 
+                placeholder="Como podemos melhorar sua experiência? Sua voz é fundamental para nós..."
+                value={feedbackText}
+                onChange={e => setFeedbackText(e.target.value)}
+                className="w-full p-5 bg-stone-50 dark:bg-stone-800 rounded-[2rem] text-[11px] border-2 border-transparent focus:border-studio-accent outline-none shadow-inner min-h-[120px] resize-none dark:text-white"
+              />
+              <button 
+                onClick={handleSendFeedback}
+                disabled={!feedbackText.trim() || feedbackSent}
+                className={`w-full py-5 rounded-2xl font-bold uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 transition-all ${feedbackSent ? 'bg-emerald-500 text-white' : 'bg-studio-ink text-white active:scale-95 disabled:opacity-50'}`}
+              >
+                {feedbackSent ? <CheckCircle size={18}/> : <Send size={18}/>}
+                {feedbackSent ? 'Enviado com Sucesso!' : 'Enviar Feedback'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -164,7 +318,7 @@ const ProfileView: React.FC = () => {
              <div className="space-y-2">
                 <label className="text-[9px] font-black uppercase tracking-widest text-gray-600 flex items-center gap-2"><Calendar size={12}/> Data de Nascimento</label>
                 <input type="date" value={editBirth} onChange={e => setEditBirth(e.target.value)} className="w-full p-4 bg-gray-50 dark:bg-zinc-900 rounded-2xl outline-none border border-transparent focus:border-[#D4B499] text-sm dark:text-white" />
-                <p className="text-[8px] text-gray-600 italic">Usamos sua data para preparar surpresas no seu mês!</p>
+                <p className="text-[8px] text-[#D99489] font-bold uppercase tracking-wider mt-1">🎁 Ganhe 10% de desconto no seu mês e um atendimento especializado!</p>
              </div>
              <div className="space-y-2 opacity-50">
                 <label className="text-[9px] font-black uppercase tracking-widest text-gray-600 flex items-center gap-2"><Phone size={12}/> WhatsApp (Identificador)</label>
@@ -184,18 +338,35 @@ const ProfileView: React.FC = () => {
 
       {activeSection === 'policies' && (
         <div className="space-y-6 animate-fade">
-          <div className="bg-white dark:bg-zinc-800 border border-[#F5E6DA] dark:border-zinc-800 p-8 rounded-[2.5rem] shadow-sm space-y-4">
-             <div className="flex items-center gap-3 text-[#D4B499]">
-                <ShieldCheck size={24} />
-                <h3 className="font-serif font-bold text-lg dark:text-white">Privacidade Ivone</h3>
+          <div className="bg-white dark:bg-zinc-800 border border-[#F5E6DA] dark:border-zinc-800 p-8 rounded-[3.5rem] shadow-sm space-y-6">
+             <div className="flex items-center gap-3 text-studio-accent">
+                <ShieldCheck size={28} />
+                <h3 className="font-serif font-bold text-xl dark:text-white tracking-tight">Privacidade Ivone</h3>
              </div>
-             <p className="text-[11px] text-gray-700 leading-relaxed italic whitespace-pre-wrap no-scrollbar overflow-y-auto max-h-60">
-                {TERMS_TEXT}
-             </p>
-             <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/50">
-                <CheckCircle size={14} className="text-emerald-500" />
-                <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">LGPD Compliant</span>
+             <div className="bg-stone-50 dark:bg-stone-900 p-6 rounded-[2rem] border border-stone-100 dark:border-stone-800">
+               <p className="text-[11px] text-stone-700 dark:text-stone-300 leading-relaxed italic whitespace-pre-wrap no-scrollbar overflow-y-auto max-h-60">
+                  {TERMS_TEXT}
+               </p>
              </div>
+             
+             {user.termsAccepted ? (
+               <div className="flex items-center gap-4 bg-emerald-50 dark:bg-emerald-900/20 p-5 rounded-2xl border border-emerald-100 dark:border-emerald-800/50">
+                  <div className="w-10 h-10 bg-white dark:bg-stone-800 rounded-full flex items-center justify-center text-emerald-500 shadow-sm">
+                    <CheckCircle size={20} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest">Termos Aceitos</p>
+                    <p className="text-[8px] text-emerald-600/70 dark:text-emerald-500/70 uppercase tracking-widest mt-0.5">LGPD Compliant</p>
+                  </div>
+               </div>
+             ) : (
+               <button 
+                 onClick={acceptTerms}
+                 className="w-full bg-studio-accent text-studio-ink py-5 rounded-2xl font-bold uppercase text-[11px] tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
+               >
+                 <CheckCircle size={18} /> Aceito os Termos
+               </button>
+             )}
           </div>
         </div>
       )}

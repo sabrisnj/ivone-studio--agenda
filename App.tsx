@@ -11,11 +11,11 @@ import NotificationView from './views/NotificationView';
 import ChatView from './views/ChatView';
 import GalleryView from './views/GalleryView';
 import RatingPopup from './components/RatingPopup';
-import { ShieldCheck, FileText, ChevronLeft, X, Gift } from 'lucide-react';
+import { ShieldCheck, FileText, ChevronLeft, X, Gift, CheckCircle } from 'lucide-react';
 import { TERMS_TEXT } from './constants';
 
 const App: React.FC = () => {
-  const { user, login, isAdmin, toggleAdmin, speak, accessibility, salonConfig } = useApp();
+  const { user, login, isAdmin, toggleAdmin, speak, accessibility, salonConfig, acceptTerms } = useApp();
   const [activeTab, setActiveTab] = useState('home');
 
   useEffect(() => {
@@ -84,7 +84,7 @@ const App: React.FC = () => {
               <div className="space-y-4 text-left">
                 <div className="space-y-1">
                   <label className="text-[9px] uppercase font-black text-gray-400 ml-1 tracking-widest">Nome Completo</label>
-                  <input aria-label="Nome Completo" placeholder="Como deseja ser chamada?" value={lName} onChange={e => setLName(e.target.value)} className="w-full p-4 bg-gray-50 dark:bg-zinc-800 dark:text-white rounded-2xl outline-none border border-transparent focus:border-[#D99489] transition-all shadow-inner text-sm" />
+                  <input aria-label="Nome Completo" placeholder="Como gostaria que chamássemos você?" value={lName} onChange={e => setLName(e.target.value)} className="w-full p-4 bg-gray-50 dark:bg-zinc-800 dark:text-white rounded-2xl outline-none border border-transparent focus:border-[#D99489] transition-all shadow-inner text-sm" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[9px] uppercase font-black text-gray-400 ml-1 tracking-widest">WhatsApp</label>
@@ -123,6 +123,42 @@ const App: React.FC = () => {
               <button onClick={() => setShowLoginTerms(false)} className="w-full bg-[#D4B499] text-white py-4 rounded-2xl font-bold uppercase text-[10px] tracking-widest">Fechar Termos</button>
             </div>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  // Blocking Terms Acceptance for first-time users
+  if (user && !user.termsAccepted) {
+    return (
+      <div className="min-h-screen bg-[#FFF9F8] dark:bg-zinc-950 flex items-center justify-center p-6 transition-colors">
+        <div className="w-full max-w-lg bg-white dark:bg-zinc-900 rounded-[3.5rem] p-10 shadow-2xl space-y-8 animate-fade-up border border-[#F5E6DA]/30">
+          <div className="text-center space-y-4">
+            <div className="w-20 h-20 bg-studio-accent/10 rounded-full mx-auto flex items-center justify-center text-studio-accent shadow-inner">
+              <ShieldCheck size={40} />
+            </div>
+            <h2 className="text-2xl font-serif font-bold dark:text-white tracking-tight">Bem-vinda ao Ivone Studio</h2>
+            <p className="text-[10px] text-stone-500 font-bold uppercase tracking-[0.2em]">Políticas de Privacidade & Termos</p>
+          </div>
+
+          <div className="bg-stone-50 dark:bg-stone-800/50 p-8 rounded-[2.5rem] border border-stone-100 dark:border-stone-700 max-h-[50vh] overflow-y-auto no-scrollbar shadow-inner">
+            <p className="text-[11px] text-stone-600 dark:text-stone-400 leading-relaxed italic whitespace-pre-wrap font-medium">
+              {TERMS_TEXT}
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <button 
+              onClick={acceptTerms}
+              className="w-full bg-studio-accent text-studio-ink py-6 rounded-2xl font-bold uppercase text-[11px] tracking-[0.2em] shadow-xl active:scale-95 transition-all flex items-center justify-center gap-3"
+            >
+              <CheckCircle size={20} className="text-studio-ink" />
+              Li e Aceito os Termos
+            </button>
+            <p className="text-[9px] text-center text-stone-400 font-medium px-8 leading-relaxed">
+              Ao clicar em aceitar, você concorda com nossas diretrizes de privacidade e tratamento de dados (LGPD).
+            </p>
+          </div>
         </div>
       </div>
     );

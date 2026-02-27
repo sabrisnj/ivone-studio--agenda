@@ -12,7 +12,8 @@ export const COLORS = {
 export const SALON_INFO = {
   whatsapp: '+55 11 99730-8578',
   pixKey: 'ivoneperpetuo13@gmail.com',
-  address: 'R. Olinda, 23 - Jardim Nova Pietro, São Bernardo do Campo - SP, 09770-070',
+  address: 'Rua Olinda, 23 - Jardim Nova Petrópolis, São Bernardo do Campo - SP, 09770-070',
+  hours: 'Terça a Sábado, das 09h às 19h',
   instagram: '@ivonehairstudio'
 };
 

@@ -489,6 +489,100 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
             </div>
 
             <div className="bg-white dark:bg-zinc-900 border border-[#F5E6DA] p-8 rounded-[3rem] space-y-6">
+               <h3 className="text-xl font-serif font-bold dark:text-white">Contatos do Chat</h3>
+               <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Configure os profissionais que aparecem no chat</p>
+               
+               <div className="space-y-6">
+                 {/* Prof 1 - Cabelo */}
+                 <div className="p-6 bg-rose-50/30 dark:bg-rose-900/10 rounded-[2rem] border border-rose-100 dark:border-rose-900/20 space-y-4">
+                   <p className="text-[9px] font-black uppercase tracking-widest text-rose-400">Profissional 1 (Cabelo)</p>
+                   <div className="grid grid-cols-2 gap-3">
+                     <div className="space-y-1">
+                       <label className="text-[8px] font-bold text-gray-400 uppercase ml-1">Nome</label>
+                       <input 
+                         value={salonConfig.professionals.prof1_nome} 
+                         onChange={e => updateSalonConfig({ professionals: { ...salonConfig.professionals, prof1_nome: e.target.value } })} 
+                         className="w-full p-3 bg-white dark:bg-zinc-800 rounded-xl text-xs outline-none border border-transparent focus:border-rose-300" 
+                       />
+                     </div>
+                     <div className="space-y-1">
+                       <label className="text-[8px] font-bold text-gray-400 uppercase ml-1">WhatsApp</label>
+                       <input 
+                         value={salonConfig.professionals.prof1_whats} 
+                         onChange={e => updateSalonConfig({ professionals: { ...salonConfig.professionals, prof1_whats: e.target.value } })} 
+                         className="w-full p-3 bg-white dark:bg-zinc-800 rounded-xl text-xs outline-none border border-transparent focus:border-rose-300" 
+                       />
+                     </div>
+                   </div>
+                 </div>
+
+                 {/* Prof 2 - Olhar */}
+                 <div className="p-6 bg-indigo-50/30 dark:bg-indigo-900/10 rounded-[2rem] border border-indigo-100 dark:border-indigo-900/20 space-y-4">
+                   <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Profissional 2 (Olhar)</p>
+                   <div className="grid grid-cols-2 gap-3">
+                     <div className="space-y-1">
+                       <label className="text-[8px] font-bold text-gray-400 uppercase ml-1">Nome</label>
+                       <input 
+                         value={salonConfig.professionals.prof2_nome} 
+                         onChange={e => updateSalonConfig({ professionals: { ...salonConfig.professionals, prof2_nome: e.target.value } })} 
+                         className="w-full p-3 bg-white dark:bg-zinc-800 rounded-xl text-xs outline-none border border-transparent focus:border-indigo-300" 
+                       />
+                     </div>
+                     <div className="space-y-1">
+                       <label className="text-[8px] font-bold text-gray-400 uppercase ml-1">WhatsApp</label>
+                       <input 
+                         value={salonConfig.professionals.prof2_whats} 
+                         onChange={e => updateSalonConfig({ professionals: { ...salonConfig.professionals, prof2_whats: e.target.value } })} 
+                         className="w-full p-3 bg-white dark:bg-zinc-800 rounded-xl text-xs outline-none border border-transparent focus:border-indigo-300" 
+                       />
+                     </div>
+                   </div>
+                 </div>
+
+                 {/* Prof 3 - Manicure */}
+                 <div className="p-6 bg-emerald-50/30 dark:bg-emerald-900/10 rounded-[2rem] border border-emerald-100 dark:border-emerald-900/20 space-y-4">
+                   <p className="text-[9px] font-black uppercase tracking-widest text-emerald-400">Profissional 3 (Manicure)</p>
+                   <div className="grid grid-cols-2 gap-3">
+                     <div className="space-y-1">
+                       <label className="text-[8px] font-bold text-gray-400 uppercase ml-1">Nome</label>
+                       <input 
+                         value={salonConfig.professionals.prof3_nome} 
+                         onChange={e => updateSalonConfig({ professionals: { ...salonConfig.professionals, prof3_nome: e.target.value } })} 
+                         className="w-full p-3 bg-white dark:bg-zinc-800 rounded-xl text-xs outline-none border border-transparent focus:border-emerald-300" 
+                       />
+                     </div>
+                     <div className="space-y-1">
+                       <label className="text-[8px] font-bold text-gray-400 uppercase ml-1">WhatsApp</label>
+                       <input 
+                         value={salonConfig.professionals.prof3_whats} 
+                         onChange={e => updateSalonConfig({ professionals: { ...salonConfig.professionals, prof3_whats: e.target.value } })} 
+                         className="w-full p-3 bg-white dark:bg-zinc-800 rounded-xl text-xs outline-none border border-transparent focus:border-emerald-300" 
+                       />
+                     </div>
+                   </div>
+                 </div>
+               </div>
+
+               <button 
+                 onClick={() => {
+                   const clean = (num: string) => num.replace(/\D/g, '');
+                   updateSalonConfig({
+                     professionals: {
+                       ...salonConfig.professionals,
+                       prof1_whats: clean(salonConfig.professionals.prof1_whats),
+                       prof2_whats: clean(salonConfig.professionals.prof2_whats),
+                       prof3_whats: clean(salonConfig.professionals.prof3_whats),
+                     }
+                   });
+                   alert('Dados dos profissionais atualizados!');
+                 }} 
+                 className="w-full bg-studio-ink text-white py-5 rounded-[2rem] font-bold uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 shadow-xl active:scale-95 transition-all"
+               >
+                 <Save size={16}/> Salvar Contatos
+               </button>
+            </div>
+
+            <div className="bg-white dark:bg-zinc-900 border border-[#F5E6DA] p-8 rounded-[3rem] space-y-6">
                <h4 className="text-sm font-bold dark:text-white">Notificação em Massa</h4>
                <div className="space-y-4">
                   <input placeholder="Título" value={notifData.title} onChange={e => setNotifData({...notifData, title: e.target.value})} className="w-full p-4 bg-gray-50 rounded-2xl text-xs" />
