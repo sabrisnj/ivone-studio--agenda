@@ -62,7 +62,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab }) =>
           animate={{ opacity: 1, x: 0 }}
           className="flex items-center gap-4"
         >
-           <div className="w-11 h-11 bg-studio-accent rounded-2xl flex items-center justify-center text-white font-serif font-light text-xl shadow-lg shadow-studio-accent/20">IH</div>
+           <div className="w-11 h-11 bg-[#e9c4bc] rounded-full flex items-center justify-center text-[#4A3B39] font-serif font-bold text-xl shadow-lg shadow-[#e9c4bc]/20">IH</div>
            <div>
               <h1 className="text-base font-serif font-medium text-studio-ink dark:text-white leading-none tracking-tight">Ivone Studio</h1>
               <p className="text-[9px] text-studio-sage font-bold uppercase tracking-[0.25em] mt-1">Premium Beauty</p>

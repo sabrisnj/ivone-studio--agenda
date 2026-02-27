@@ -74,7 +74,7 @@ const App: React.FC = () => {
           {!showLoginTerms ? (
             <div className="space-y-6 animate-fade">
               <div className="space-y-4">
-                <div className="w-20 h-20 bg-[#D99489] rounded-full mx-auto flex items-center justify-center text-white text-3xl font-serif font-bold shadow-xl ring-8 ring-[#FAF7F5] dark:ring-zinc-800" aria-hidden="true">IH</div>
+                <div className="w-20 h-20 bg-[#e9c4bc] rounded-full mx-auto flex items-center justify-center text-[#4A3B39] text-3xl font-serif font-bold shadow-xl ring-8 ring-[#FAF7F5] dark:ring-zinc-800" aria-hidden="true">IH</div>
                 <div>
                   <h1 className="text-2xl font-serif font-bold dark:text-white leading-tight">Ivone Hair Studio</h1>
                   <p className="text-[10px] font-bold text-[#86BDB1] tracking-[0.4em] uppercase">Beleza & Bem-estar</p>
