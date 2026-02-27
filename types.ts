@@ -7,7 +7,7 @@ export enum ServiceCategory {
   MASSAGE = 'Massagem',
 }
 
-export type GalleryCategory = 'Cabelo' | 'Unhas' | 'Cílios' | 'Antes e Depois';
+export type GalleryCategory = 'Linhas de Produtos' | 'Cabelo' | 'Unhas' | 'Cílios' | 'Antes e Depois';
 
 export interface GalleryItem {
   id: string;

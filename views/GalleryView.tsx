@@ -15,7 +15,7 @@ const GalleryView: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState<GalleryCategory | 'Todos'>('Todos');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  const filters: (GalleryCategory | 'Todos')[] = ['Todos', 'Cabelo', 'Unhas', 'Cílios', 'Antes e Depois'];
+  const filters: (GalleryCategory | 'Todos')[] = ['Todos', 'Linhas de Produtos', 'Cabelo', 'Unhas', 'Cílios', 'Antes e Depois'];
 
   const filteredItems = activeFilter === 'Todos' 
     ? galleryItems 

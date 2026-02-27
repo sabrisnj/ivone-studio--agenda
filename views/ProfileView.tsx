@@ -7,7 +7,7 @@ import {
   ShieldCheck, CheckCircle, Contrast, Settings, Info,
   User as UserIcon, Calendar, Phone, Save, ChevronDown, ChevronUp,
   Bell, Coffee, HeartPulse, Thermometer, Zap, Droplets, UserCheck, Activity,
-  MessageSquare, Send
+  MessageSquare, Send, Heart
 } from 'lucide-react';
 import { ClientPreferences } from '../types';
 
@@ -16,6 +16,7 @@ const ProfileView: React.FC = () => {
   
   const [activeSection, setActiveSection] = useState<'settings' | 'data' | 'policies'>('settings');
   const [isAcessibilidadeOpen, setIsAcessibilidadeOpen] = useState(false);
+  const [isExperienciaOpen, setIsExperienciaOpen] = useState(false);
   const [editName, setEditName] = useState(user?.name || '');
   const [editBirth, setEditBirth] = useState(user?.birthDate || '');
   const [isSaved, setIsSaved] = useState(false);
@@ -214,74 +215,94 @@ const ProfileView: React.FC = () => {
             </button>
           </div>
 
-          {/* Preferências do Ritual */}
-          <div className="bg-white dark:bg-stone-900 p-8 rounded-[3rem] border border-stone-100 dark:border-stone-800 space-y-8 shadow-sm">
-            <div className="flex items-center justify-between">
+          {/* Experiência Personalizada */}
+          <div className="bg-white dark:bg-stone-900 rounded-[2.5rem] border border-stone-100 dark:border-stone-800 overflow-hidden shadow-sm">
+            <button 
+              onClick={() => setIsExperienciaOpen(!isExperienciaOpen)}
+              className="w-full p-6 flex items-center justify-between hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
+            >
               <div className="flex items-center gap-5">
-                <div className={`p-4 rounded-2xl ${ritualPrefs.saveToProfile ? 'bg-studio-accent text-studio-ink' : 'bg-stone-50 text-stone-600'}`}>
+                <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800 text-studio-accent">
                   <UserCheck size={24} />
                 </div>
                 <div className="text-left">
-                  <p className="text-base font-bold dark:text-white tracking-tight">Memorizar Perfil?</p>
-                  <p className="text-[10px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">Preferências Permanentes</p>
+                  <p className="text-base font-bold dark:text-white tracking-tight">Experiência Personalizada</p>
+                  <p className="text-[10px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">Sua jornada sob medida</p>
                 </div>
               </div>
-              <button 
-                onClick={() => setRitualPrefs({...ritualPrefs, saveToProfile: !ritualPrefs.saveToProfile})}
-                className={`w-14 h-7 rounded-full p-1 transition-colors ${ritualPrefs.saveToProfile ? 'bg-studio-accent' : 'bg-stone-200'}`}
-              >
-                <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform ${ritualPrefs.saveToProfile ? 'translate-x-7' : 'translate-x-0'}`} />
-              </button>
-            </div>
+              {isExperienciaOpen ? <ChevronUp size={20} className="text-stone-400" /> : <ChevronDown size={20} className="text-stone-400" />}
+            </button>
 
-            <div className="space-y-4 pt-6 border-t border-stone-50 dark:border-stone-800">
-              <label className="text-[10px] font-bold text-stone-600 uppercase tracking-widest flex items-center gap-2"><Coffee size={14}/> Menu de Bebidas</label>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  {id: 'Café Quente', label: '☕ Café Quente'},
-                  {id: 'Café Morno', label: '☕ Café Morno'},
-                  {id: 'Chá Quente', label: '🍵 Chá Quente'},
-                  {id: 'Chá Morno', label: '🍵 Chá Morno'},
-                  {id: 'Água Fresca', label: '💧 Água Fresca'},
-                  {id: 'Água Gelada', label: '💧 Água Gelada'},
-                  {id: 'Nada', label: '🚫 Nada'}
-                ].map(item => (
+            {isExperienciaOpen && (
+              <div className="p-8 pt-0 space-y-8 animate-studio-fade">
+                <div className="flex items-center justify-between pt-6 border-t border-stone-50 dark:border-stone-800">
+                  <div className="flex items-center gap-5">
+                    <div className={`p-4 rounded-2xl ${ritualPrefs.saveToProfile ? 'bg-studio-accent text-studio-ink' : 'bg-stone-50 text-stone-600'}`}>
+                      <Heart size={24} />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-base font-bold dark:text-white tracking-tight">Memorizar Perfil?</p>
+                      <p className="text-[10px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">Preferências Permanentes</p>
+                    </div>
+                  </div>
                   <button 
-                    key={item.id}
-                    onClick={() => setRitualPrefs({...ritualPrefs, refreshment: item.id as any})}
-                    className={`p-3 rounded-2xl text-[9px] font-bold border-2 transition-all ${ritualPrefs.refreshment === item.id ? 'bg-studio-accent border-studio-accent text-studio-ink shadow-lg' : 'bg-stone-50 dark:bg-stone-800 border-transparent text-stone-600'}`}
+                    onClick={() => setRitualPrefs({...ritualPrefs, saveToProfile: !ritualPrefs.saveToProfile})}
+                    className={`w-14 h-7 rounded-full p-1 transition-colors ${ritualPrefs.saveToProfile ? 'bg-studio-accent' : 'bg-stone-200'}`}
                   >
-                    {item.label}
+                    <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform ${ritualPrefs.saveToProfile ? 'translate-x-7' : 'translate-x-0'}`} />
                   </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-4 pt-6 border-t border-stone-50 dark:border-stone-800">
-              <label className="text-[10px] font-bold text-stone-600 uppercase tracking-widest flex items-center gap-2"><Activity size={14}/> Saúde & Bem-estar</label>
-              <div className="grid gap-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <input placeholder="Alergias..." value={ritualPrefs.health.alergias} onChange={e => setRitualPrefs({...ritualPrefs, health: {...ritualPrefs.health, alergias: e.target.value}})} className="p-4 bg-stone-50 dark:bg-stone-800 rounded-2xl text-[11px] border-2 border-transparent focus:border-studio-accent outline-none shadow-sm dark:text-white" />
-                  <input placeholder="Aromas..." value={ritualPrefs.health.cheiro} onChange={e => setRitualPrefs({...ritualPrefs, health: {...ritualPrefs.health, cheiro: e.target.value}})} className="p-4 bg-stone-50 dark:bg-stone-800 rounded-2xl text-[11px] border-2 border-transparent focus:border-studio-accent outline-none shadow-sm dark:text-white" />
                 </div>
-                <div className="bg-stone-50 dark:bg-stone-800 p-5 rounded-2xl flex items-center justify-between border border-stone-100 dark:border-stone-700 shadow-sm">
-                  <span className="text-[10px] font-bold text-stone-600 uppercase flex items-center gap-2"><Droplets size={12}/> Lavatório</span>
-                  <div className="flex gap-2">
-                    {['Quente', 'Morna', 'Fria'].map(t => (
-                      <button key={t} onClick={() => setRitualPrefs({...ritualPrefs, health: {...ritualPrefs.health, aguaTemp: t as any}})} className={`px-4 py-2 rounded-xl text-[9px] font-bold uppercase transition-all ${ritualPrefs.health.aguaTemp === t ? 'bg-studio-sage text-studio-ink shadow-md' : 'bg-white dark:bg-stone-700 text-stone-600'}`}>{t}</button>
+
+                <div className="space-y-4 pt-6 border-t border-stone-50 dark:border-stone-800">
+                  <label className="text-[10px] font-bold text-stone-600 uppercase tracking-widest flex items-center gap-2"><Coffee size={14}/> Menu de Bebidas</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      {id: 'Café Quente', label: '☕ Café Quente'},
+                      {id: 'Café Morno', label: '☕ Café Morno'},
+                      {id: 'Chá Quente', label: '🍵 Chá Quente'},
+                      {id: 'Chá Morno', label: '🍵 Chá Morno'},
+                      {id: 'Água Fresca', label: '💧 Água Fresca'},
+                      {id: 'Água Gelada', label: '💧 Água Gelada'},
+                      {id: 'Nada', label: '🚫 Nada'}
+                    ].map(item => (
+                      <button 
+                        key={item.id}
+                        onClick={() => setRitualPrefs({...ritualPrefs, refreshment: item.id as any})}
+                        className={`p-3 rounded-2xl text-[9px] font-bold border-2 transition-all ${ritualPrefs.refreshment === item.id ? 'bg-studio-accent border-studio-accent text-studio-ink shadow-lg' : 'bg-stone-50 dark:bg-stone-800 border-transparent text-stone-600'}`}
+                      >
+                        {item.label}
+                      </button>
                     ))}
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <button 
-              onClick={handleSaveData}
-              className={`w-full py-5 rounded-[1.8rem] font-bold uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${isSaved ? 'bg-emerald-500 text-white' : 'bg-studio-accent text-studio-ink shadow-xl active:scale-95'}`}
-            >
-              {isSaved ? <CheckCircle size={18}/> : <Save size={18}/>}
-              {isSaved ? 'Preferências Salvas!' : 'Salvar Preferências'}
-            </button>
+                <div className="space-y-4 pt-6 border-t border-stone-50 dark:border-stone-800">
+                  <label className="text-[10px] font-bold text-stone-600 uppercase tracking-widest flex items-center gap-2"><Activity size={14}/> Saúde & Bem-estar</label>
+                  <div className="grid gap-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <input placeholder="Alergias..." value={ritualPrefs.health.alergias} onChange={e => setRitualPrefs({...ritualPrefs, health: {...ritualPrefs.health, alergias: e.target.value}})} className="p-4 bg-stone-50 dark:bg-stone-800 rounded-2xl text-[11px] border-2 border-transparent focus:border-studio-accent outline-none shadow-sm dark:text-white" />
+                      <input placeholder="Aromas..." value={ritualPrefs.health.cheiro} onChange={e => setRitualPrefs({...ritualPrefs, health: {...ritualPrefs.health, cheiro: e.target.value}})} className="p-4 bg-stone-50 dark:bg-stone-800 rounded-2xl text-[11px] border-2 border-transparent focus:border-studio-accent outline-none shadow-sm dark:text-white" />
+                    </div>
+                    <div className="bg-stone-50 dark:bg-stone-800 p-5 rounded-2xl flex items-center justify-between border border-stone-100 dark:border-stone-700 shadow-sm">
+                      <span className="text-[10px] font-bold text-stone-600 uppercase flex items-center gap-2"><Droplets size={12}/> Lavatório</span>
+                      <div className="flex gap-2">
+                        {['Quente', 'Morna', 'Fria'].map(t => (
+                          <button key={t} onClick={() => setRitualPrefs({...ritualPrefs, health: {...ritualPrefs.health, aguaTemp: t as any}})} className={`px-4 py-2 rounded-xl text-[9px] font-bold uppercase transition-all ${ritualPrefs.health.aguaTemp === t ? 'bg-studio-sage text-studio-ink shadow-md' : 'bg-white dark:bg-stone-700 text-stone-600'}`}>{t}</button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={handleSaveData}
+                  className={`w-full py-5 rounded-[1.8rem] font-bold uppercase text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 transition-all ${isSaved ? 'bg-emerald-500 text-white' : 'bg-studio-accent text-studio-ink shadow-xl active:scale-95'}`}
+                >
+                  {isSaved ? <CheckCircle size={18}/> : <Save size={18}/>}
+                  {isSaved ? 'Preferências Salvas!' : 'Salvar Preferências'}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Reclamações e Sugestões */}
@@ -384,7 +405,7 @@ const ProfileView: React.FC = () => {
       </button>
 
       <div className="text-center">
-        <p className="text-[8px] text-gray-300 font-bold uppercase tracking-[0.5em]">Ivone Studio • v2.6.0 Premium</p>
+        <p className="text-[8px] text-gray-300 font-bold uppercase tracking-[0.5em]">Ivone Studio • v1 Premium</p>
       </div>
     </div>
   );
