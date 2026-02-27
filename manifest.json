@@ -1,0 +1,20 @@
+{
+  "name": "Ivone Hair Studio",
+  "short_name": "Ivone",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FFF9F8",
+  "theme_color": "#D99489",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
