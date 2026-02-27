@@ -113,8 +113,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isTyping, setIsTyping] = useState(false);
 
   const [salonConfig, setSalonConfig] = useState<SalonConfig>(() => {
-    const saved = localStorage.getItem('ivone_config');
-    return saved ? JSON.parse(saved) : {
+    const defaultConfig: SalonConfig = {
       pointsPerService: 1,
       pointsTarget: 2,
       pointsValidityMonths: 6,
@@ -148,6 +147,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         prof3_whats: '5511952040382',
       }
     };
+
+    const saved = localStorage.getItem('ivone_config');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        ...defaultConfig,
+        ...parsed,
+        dynamicText: { ...defaultConfig.dynamicText, ...(parsed.dynamicText || {}) },
+        colors: { ...defaultConfig.colors, ...(parsed.colors || {}) },
+        professionals: { ...defaultConfig.professionals, ...(parsed.professionals || {}) },
+        businessHours: { ...defaultConfig.businessHours, ...(parsed.businessHours || {}) }
+      };
+    }
+    return defaultConfig;
   });
 
   useEffect(() => {
