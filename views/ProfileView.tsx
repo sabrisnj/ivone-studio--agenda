@@ -190,21 +190,29 @@ const ProfileView: React.FC = () => {
           </div>
 
           {/* Notificações Inteligentes */}
-          <button 
-            onClick={requestPushPermission}
-            className="w-full bg-white dark:bg-stone-900 p-6 rounded-[2.5rem] border border-stone-100 dark:border-stone-800 flex items-center justify-between shadow-sm active:scale-95 transition-all hover:border-studio-accent/20"
-          >
+          <div className="bg-white dark:bg-stone-900 p-6 rounded-[2.5rem] border border-stone-100 dark:border-stone-800 flex items-center justify-between shadow-sm">
             <div className="flex items-center gap-5">
-              <div className="p-4 rounded-2xl bg-studio-sage/10 text-studio-sage">
+              <div className={`p-4 rounded-2xl ${user.smartNotifications ? 'bg-studio-sage/10 text-studio-sage' : 'bg-stone-50 text-stone-400'}`}>
                 <Bell size={24} />
               </div>
               <div className="text-left">
                 <p className="text-base font-bold dark:text-white tracking-tight">Notificações Inteligentes</p>
-                <p className="text-[10px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">Alertas Ativos</p>
+                <p className={`text-[10px] font-bold uppercase tracking-widest mt-0.5 ${user.smartNotifications ? 'text-studio-sage' : 'text-stone-400'}`}>
+                  {user.smartNotifications ? 'ALERTAS ATIVOS' : 'ALERTAS DESATIVADOS'}
+                </p>
               </div>
             </div>
-            <Zap size={20} className="text-studio-sage animate-pulse" />
-          </button>
+            <button 
+              onClick={() => {
+                const newState = !user.smartNotifications;
+                updateUserData({ smartNotifications: newState });
+                if (newState) requestPushPermission();
+              }}
+              className={`w-14 h-7 rounded-full p-1 transition-colors ${user.smartNotifications ? 'bg-studio-sage' : 'bg-stone-200'}`}
+            >
+              <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform ${user.smartNotifications ? 'translate-x-7' : 'translate-x-0'}`} />
+            </button>
+          </div>
 
           {/* Preferências do Ritual */}
           <div className="bg-white dark:bg-stone-900 p-8 rounded-[3rem] border border-stone-100 dark:border-stone-800 space-y-8 shadow-sm">

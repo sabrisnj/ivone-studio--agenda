@@ -45,6 +45,7 @@ export interface User {
   createdAt: string;
   permanentPreferences?: ClientPreferences;
   termsAccepted?: boolean;
+  smartNotifications?: boolean;
 }
 
 export interface ClientPreferences {

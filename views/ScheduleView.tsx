@@ -36,7 +36,7 @@ interface ScheduleViewProps {
 }
 
 const ScheduleView: React.FC<ScheduleViewProps> = ({ preselectedServiceId, onClearPreselected, onComplete }) => {
-  const { user, addAppointment, services, salonConfig, updateAppointmentPreferences, requestPushPermission, performCheckIn, payAppointment } = useApp();
+  const { user, addAppointment, services, salonConfig, updateAppointmentPreferences } = useApp();
   const [step, setStep] = useState(1);
   const [selectedService, setSelectedService] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
@@ -44,10 +44,6 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ preselectedServiceId, onCle
   const [confirmedId, setConfirmedId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<ServiceCategory | 'Todos'>('Todos');
   const [dateError, setDateError] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isCheckingIn, setIsCheckingIn] = useState(false);
-  const [showPayment, setShowPayment] = useState(false);
-  const [paymentDone, setPaymentDone] = useState(false);
 
   // Estados de Conformidade
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -104,40 +100,6 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ preselectedServiceId, onCle
     if (confirmedId) {
       updateAppointmentPreferences(confirmedId, prefs);
       handleFinish();
-    }
-  };
-
-  const handlePhotoCheckIn = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && confirmedId) {
-      setIsCheckingIn(true);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        performCheckIn(confirmedId, reader.result as string);
-        setIsCheckingIn(false);
-        setShowPayment(true);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSimpleCheckIn = () => {
-    if (confirmedId) {
-      performCheckIn(confirmedId);
-      setShowPayment(true);
-    }
-  };
-
-  const handlePayment = (method: 'debito' | 'credito' | 'pix') => {
-    if (confirmedId) {
-      if (method === 'pix') {
-        alert(`Chave PIX: ${salonConfig.pixName || 'Ivone Studio'}\n(11) 99999-9999`);
-      }
-      payAppointment(confirmedId, method);
-      setPaymentDone(true);
-      setTimeout(() => {
-        handleFinish();
-      }, 2000);
     }
   };
 
@@ -331,164 +293,20 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ preselectedServiceId, onCle
              <div className="text-center space-y-4">
                <div className="w-20 h-20 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center text-green-500 mx-auto shadow-inner"><CheckCircle2 size={40} /></div>
                <h3 className="text-2xl font-serif font-bold dark:text-white">Reserva Confirmada!</h3>
-               <p className="text-[10px] text-gray-600 font-bold uppercase tracking-widest leading-relaxed">Desenhe agora a sua experiência premium:</p>
              </div>
 
               <div className="bg-gradient-to-br from-[#FAF7F5] to-white dark:from-zinc-900 dark:to-zinc-800 p-8 rounded-[3.5rem] border-2 border-[#D4B499] shadow-2xl space-y-10 animate-fade-up">
-                
-                {selectedDate === today && (
-                  <div className="bg-[#86BDB1]/10 p-6 rounded-3xl border-2 border-[#86BDB1]/20 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <Camera className="text-[#86BDB1]" size={20} />
-                      <p className="text-xs font-bold text-[#86BDB1] uppercase tracking-tighter">Check-in no Salão</p>
-                    </div>
-                    
-                    {!showPayment ? (
-                      <>
-                        <p className="text-[10px] text-gray-700 font-medium">Já está no studio? Faça seu check-in agora!</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          <button 
-                            onClick={handleSimpleCheckIn}
-                            className="bg-white text-[#86BDB1] py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all"
-                          >
-                            Estou Aqui
-                          </button>
-                          <button 
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={isCheckingIn}
-                            className="bg-[#86BDB1] text-studio-ink py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all disabled:opacity-50"
-                          >
-                            {isCheckingIn ? '...' : <><Camera size={14}/> Com Foto</>}
-                          </button>
-                        </div>
-                        <input 
-                          type="file" 
-                          ref={fileInputRef} 
-                          onChange={handlePhotoCheckIn} 
-                          accept="image/*" 
-                          capture="user" 
-                          className="hidden" 
-                        />
-                      </>
-                    ) : (
-                      <div className="space-y-4 animate-fade">
-                        <p className="text-[10px] text-[#86BDB1] font-bold uppercase tracking-widest">Check-in Realizado! Selecione o Pagamento:</p>
-                        {paymentDone ? (
-                          <div className="bg-white p-4 rounded-2xl flex items-center gap-3 border border-emerald-100">
-                            <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center text-white">
-                              <Check size={16} />
-                            </div>
-                            <p className="text-[10px] font-bold text-emerald-600 uppercase">Pagamento Enviado!</p>
-                          </div>
-                        ) : (
-                          <div className="grid grid-cols-3 gap-2">
-                            <button 
-                              onClick={() => handlePayment('debito')}
-                              className="bg-white border border-gray-100 p-3 rounded-xl flex flex-col items-center gap-1 shadow-sm active:scale-95 transition-all"
-                            >
-                              <CreditCard size={14} className="text-gray-600" />
-                              <span className="text-[8px] font-bold uppercase">Débito</span>
-                            </button>
-                            <button 
-                              onClick={() => handlePayment('credito')}
-                              className="bg-white border border-gray-100 p-3 rounded-xl flex flex-col items-center gap-1 shadow-sm active:scale-95 transition-all"
-                            >
-                              <CreditCard size={14} className="text-gray-600" />
-                              <span className="text-[8px] font-bold uppercase">Crédito</span>
-                            </button>
-                            <button 
-                              onClick={() => handlePayment('pix')}
-                              className="bg-[#86BDB1] text-studio-ink p-3 rounded-xl flex flex-col items-center gap-1 shadow-sm active:scale-95 transition-all"
-                            >
-                              <QrCode size={14} />
-                              <span className="text-[8px] font-bold uppercase">PIX</span>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
+                <div className="text-center space-y-4">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 italic">
+                    Sua reserva foi realizada com sucesso. Você pode acompanhar o status na tela inicial.
+                  </p>
+                  <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">
+                    Lembre-se de fazer o check-in ao chegar no salão no dia do seu atendimento.
+                  </p>
+                </div>
 
-               <div className="bg-[#86BDB1]/10 p-6 rounded-3xl border-2 border-[#86BDB1]/20 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <Bell className="text-[#86BDB1]" size={20} />
-                    <p className="text-xs font-bold text-[#86BDB1] uppercase tracking-tighter">Notificações Inteligentes Ativas</p>
-                  </div>
-                  <p className="text-[10px] text-gray-700 font-medium">Você será avisada assim que a Ivone aceitar o horário.</p>
-                  
-                  <button 
-                    onClick={requestPushPermission}
-                    className="w-full bg-[#86BDB1] text-studio-ink py-3 rounded-xl text-[9px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all"
-                  >
-                    <Zap size={14}/> Ativar Push no Navegador
-                  </button>
-               </div>
-
-               <div className="bg-white dark:bg-zinc-800 p-6 rounded-3xl shadow-sm border-2 border-[#D4B499] ring-8 ring-[#FAF7F5] dark:ring-zinc-900/50">
-                  <button 
-                    onClick={() => setPrefs({...prefs, saveToProfile: !prefs.saveToProfile})}
-                    className="w-full flex items-center justify-between transition-all"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-2xl shadow-inner ${prefs.saveToProfile ? 'bg-[#D4B499] text-studio-ink' : 'bg-gray-100 text-gray-600'}`}>
-                        <UserCheck size={24} />
-                      </div>
-                      <div className="text-left">
-                        <p className="text-[11px] font-bold text-[#8B5E3C] dark:text-[#D4B499] uppercase tracking-tighter">Memorizar Perfil Permanente?</p>
-                        <p className="text-[9px] text-gray-600 font-medium">Lembrar estas preferências para sempre.</p>
-                      </div>
-                    </div>
-                    <div className={`w-12 h-6 rounded-full p-1 transition-colors ${prefs.saveToProfile ? 'bg-[#D4B499]' : 'bg-gray-300'}`}>
-                      <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-transform ${prefs.saveToProfile ? 'translate-x-6' : 'translate-x-0'}`} />
-                    </div>
-                  </button>
-               </div>
-
-               <div className="space-y-4">
-                 <label className="text-[10px] font-bold text-gray-600 uppercase tracking-widest ml-1 flex items-center gap-2"><Coffee size={14}/> Menu de Bebidas</label>
-                 <div className="grid grid-cols-2 gap-2">
-                   {[
-                     {id: 'Café Quente', label: '☕ Café Quente'},
-                     {id: 'Café Morno', label: '☕ Café Morno'},
-                     {id: 'Chá Quente', label: '🍵 Chá Quente'},
-                     {id: 'Chá Morno', label: '🍵 Chá Morno'},
-                     {id: 'Água Fresca', label: '💧 Água Fresca'},
-                     {id: 'Água Gelada', label: '💧 Água Gelada'},
-                     {id: 'Nada', label: '🚫 Nada'}
-                   ].map(item => (
-                     <button 
-                       key={item.id}
-                       onClick={() => setPrefs({...prefs, refreshment: item.id as any})}
-                       className={`p-3 rounded-2xl text-[9px] font-bold border-2 transition-all ${prefs.refreshment === item.id ? 'bg-[#D4B499] border-[#D4B499] text-studio-ink shadow-lg' : 'bg-white dark:bg-zinc-800 border-transparent text-gray-600'}`}
-                     >
-                       {item.label}
-                     </button>
-                   ))}
-                 </div>
-               </div>
-
-               <div className="space-y-4">
-                 <label className="text-[10px] font-bold text-gray-600 uppercase tracking-widest ml-1 flex items-center gap-2"><Activity size={14}/> Saúde & Bem-estar</label>
-                 <div className="grid gap-3">
-                   <div className="grid grid-cols-2 gap-2">
-                     <input placeholder="Alergias..." value={prefs.health.alergias} onChange={e => setPrefs({...prefs, health: {...prefs.health, alergias: e.target.value}})} className="p-4 bg-white dark:bg-zinc-800 rounded-2xl text-[11px] border-2 border-transparent focus:border-[#D4B499] outline-none shadow-sm" />
-                     <input placeholder="Aromas..." value={prefs.health.cheiro} onChange={e => setPrefs({...prefs, health: {...prefs.health, cheiro: e.target.value}})} className="p-4 bg-white dark:bg-zinc-800 rounded-2xl text-[11px] border-2 border-transparent focus:border-[#D4B499] outline-none shadow-sm" />
-                   </div>
-                   <div className="bg-white dark:bg-zinc-800 p-5 rounded-2xl flex items-center justify-between border border-[#F5E6DA] dark:border-zinc-700 shadow-sm">
-                     <span className="text-[10px] font-bold text-gray-600 uppercase flex items-center gap-2"><Droplets size={12}/> Lavatório</span>
-                     <div className="flex gap-2">
-                       {['Quente', 'Morna', 'Fria'].map(t => (
-                         <button key={t} onClick={() => setPrefs({...prefs, health: {...prefs.health, aguaTemp: t as any}})} className={`px-4 py-2 rounded-xl text-[9px] font-bold uppercase transition-all ${prefs.health.aguaTemp === t ? 'bg-[#86BDB1] text-studio-ink shadow-md' : 'bg-gray-100 dark:bg-zinc-700 text-gray-600'}`}>{t}</button>
-                       ))}
-                     </div>
-                   </div>
-                 </div>
-               </div>
-
-               <div className="pt-6 grid grid-cols-2 gap-4">
-                  <button onClick={handleFinish} className="py-5 text-[10px] font-bold text-gray-600 uppercase tracking-widest">Pular Ritual</button>
-                  <button onClick={savePreferences} className="bg-[#D4B499] text-studio-ink py-5 rounded-[2rem] text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl hover:bg-[#8B5E3C] hover:text-studio-ink transition-all">Salvar Curadoria <Check size={16}/></button>
+               <div className="pt-6">
+                  <button onClick={handleFinish} className="w-full bg-[#D4B499] text-studio-ink py-5 rounded-[2rem] text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-xl hover:bg-[#8B5E3C] hover:text-studio-ink transition-all">Concluir Agendamento <Check size={16}/></button>
                </div>
              </div>
           </div>

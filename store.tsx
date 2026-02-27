@@ -224,7 +224,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         rewards: [], 
         points: { escovas: 0, manicurePedicure: 0, ciliosManutencao: 0 }, 
         createdAt: new Date().toISOString(),
-        termsAccepted
+        termsAccepted,
+        smartNotifications: true
     };
     setUser(newUser);
     setAllUsers(prev => {
@@ -321,9 +322,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const updateUserData = useCallback((data: Partial<User>) => {
-    setUser(prev => prev ? { ...prev, ...data } : null);
-    setAllUsers(prev => prev.map(u => u.id === user?.id ? { ...u, ...data } : u));
-  }, [user?.id]);
+    setUser(prev => {
+      if (!prev) return null;
+      const updated = { ...prev, ...data };
+      setAllUsers(users => users.map(u => u.id === prev.id ? updated : u));
+      return updated;
+    });
+  }, []);
 
   const acceptTerms = useCallback(() => {
     updateUserData({ termsAccepted: true });

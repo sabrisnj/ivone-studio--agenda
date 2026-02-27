@@ -70,7 +70,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
   const handlePayment = (method: 'debito' | 'credito' | 'pix') => {
     if (activeApp) {
       if (method === 'pix') {
-        alert(`Chave PIX: ${SALON_INFO.whatsapp}\nNome: Ivone Hair Studio`);
+        alert(`Chave PIX: ${salonConfig.pixName || SALON_INFO.pixKey}\nNome: Ivone Hair Studio`);
       }
       payAppointment(activeApp.id, method);
     }
