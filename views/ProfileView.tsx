@@ -7,7 +7,7 @@ import {
   ShieldCheck, CheckCircle, Contrast, Settings, Info,
   User as UserIcon, Calendar, Phone, Save, ChevronDown, ChevronUp,
   Bell, Coffee, HeartPulse, Thermometer, Zap, Droplets, UserCheck, Activity,
-  MessageSquare, Send, Heart
+  MessageSquare, Send, Heart, BookOpen, Camera, Edit
 } from 'lucide-react';
 import { ClientPreferences } from '../types';
 
@@ -17,6 +17,8 @@ const ProfileView: React.FC = () => {
   const [activeSection, setActiveSection] = useState<'settings' | 'data' | 'policies'>('settings');
   const [isAcessibilidadeOpen, setIsAcessibilidadeOpen] = useState(false);
   const [isExperienciaOpen, setIsExperienciaOpen] = useState(false);
+  const [isGuiaOpen, setIsGuiaOpen] = useState(false);
+  const [isManualOpen, setIsManualOpen] = useState(false);
   const [editName, setEditName] = useState(user?.name || '');
   const [editBirth, setEditBirth] = useState(user?.birthDate || '');
   const [isSaved, setIsSaved] = useState(false);
@@ -54,14 +56,44 @@ const ProfileView: React.FC = () => {
     setTimeout(() => setFeedbackSent(false), 5000);
   };
 
+  const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        updateUserData({ profileImage: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="p-6 space-y-10 pb-16 animate-studio-fade">
       {/* Header Perfil */}
       <section className="flex flex-col items-center text-center space-y-5">
-        <div className="relative">
-          <div className="w-28 h-28 bg-studio-accent rounded-[3rem] flex items-center justify-center text-white text-5xl font-serif font-light shadow-2xl shadow-studio-accent/20">
-            {user.name.charAt(0)}
-          </div>
+        <div className="relative group">
+          <label className="cursor-pointer block">
+            <input 
+              type="file" 
+              accept="image/*" 
+              className="hidden" 
+              onChange={handleProfileImageChange} 
+            />
+            <div className="w-28 h-28 bg-studio-accent rounded-[3rem] flex items-center justify-center text-white text-5xl font-serif font-light shadow-2xl shadow-studio-accent/20 overflow-hidden relative">
+              {user.profileImage ? (
+                <img 
+                  src={user.profileImage} 
+                  alt={user.name} 
+                  className="w-full h-full object-cover" 
+                />
+              ) : (
+                user.name.charAt(0)
+              )}
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera size={24} className="text-white" />
+              </div>
+            </div>
+          </label>
           <div className="absolute -bottom-2 -right-2 bg-white dark:bg-stone-800 p-2.5 rounded-full shadow-lg border border-stone-100 dark:border-stone-700">
              <Award size={20} className="text-studio-accent" />
           </div>
@@ -301,6 +333,153 @@ const ProfileView: React.FC = () => {
                   {isSaved ? <CheckCircle size={18}/> : <Save size={18}/>}
                   {isSaved ? 'Preferências Salvas!' : 'Salvar Preferências'}
                 </button>
+              </div>
+            )}
+          </div>
+
+          {/* Guia de Uso do App */}
+          <div className="bg-white dark:bg-stone-900 rounded-[2.5rem] border border-stone-100 dark:border-stone-800 overflow-hidden shadow-sm">
+            <button 
+              onClick={() => setIsGuiaOpen(!isGuiaOpen)}
+              className="w-full p-6 flex items-center justify-between hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
+            >
+              <div className="flex items-center gap-5">
+                <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800 text-studio-accent">
+                  <BookOpen size={24} />
+                </div>
+                <div className="text-left">
+                  <p className="text-base font-bold dark:text-white tracking-tight">Guia de Uso do App</p>
+                  <p className="text-[10px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">Aprenda a navegar no Studio</p>
+                </div>
+              </div>
+              {isGuiaOpen ? <ChevronUp size={20} className="text-stone-400" /> : <ChevronDown size={20} className="text-stone-400" />}
+            </button>
+
+            {isGuiaOpen && (
+              <div className="p-8 pt-0 space-y-8 animate-studio-fade">
+                <div className="aspect-video w-full rounded-2xl overflow-hidden shadow-lg border border-stone-100 dark:border-stone-800">
+                  <iframe 
+                    width="100%" 
+                    height="100%" 
+                    src="https://app.heygen.com/embeds/b064c067ab774201bdbfa013379d1472" 
+                    title="HeyGen video player" 
+                    frameBorder="0" 
+                    allow="encrypted-media; fullscreen;" 
+                    allowFullScreen
+                  ></iframe>
+                </div>
+
+                <div className="space-y-6 text-left">
+                  <div className="space-y-2">
+                    <button 
+                      onClick={() => setIsManualOpen(!isManualOpen)}
+                      className="w-full flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-800 rounded-2xl border border-stone-100 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors"
+                    >
+                      <div className="flex flex-col text-left">
+                        <h3 className="text-sm font-serif font-bold dark:text-white">📖 Manual do Usuário: Ivone Studio</h3>
+                        <p className="text-[8px] text-studio-accent font-bold uppercase tracking-widest">Versão 1.0 Premium</p>
+                      </div>
+                      {isManualOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </button>
+                    
+                    {isManualOpen && (
+                      <div className="space-y-6 animate-studio-fade pt-4">
+                        <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
+                          Bem-vinda ao ecossistema digital do Ivone Studio. Este guia prático ajudará você a navegar por todas as funcionalidades do nosso aplicativo de agendamento, garantindo que sua jornada de beleza comece antes mesmo de você chegar ao salão.
+                        </p>
+
+                        <div className="space-y-4">
+                          <div className="space-y-2">
+                            <p className="text-xs font-bold dark:text-white">1. Visão Geral (Tela Inicial)</p>
+                            <ul className="text-[11px] text-stone-600 dark:text-stone-400 space-y-1 list-disc pl-4">
+                              <li><span className="font-bold">Próximos Agendamentos:</span> No topo, você verá seus horários confirmados.</li>
+                              <li><span className="font-bold">Check-in:</span> No dia do seu atendimento, um botão de "Estou no Salão" aparecerá aqui.</li>
+                              <li><span className="font-bold">Clube de Pontos:</span> Acompanhe quantos pontos você tem para trocar por mimos.</li>
+                              <li><span className="font-bold">Reagendamento Rápido:</span> Atalhos para os serviços que você mais ama.</li>
+                            </ul>
+                          </div>
+
+                          <div className="space-y-2">
+                            <p className="text-xs font-bold dark:text-white">2. Como Realizar um Agendamento</p>
+                            <p className="text-[11px] text-stone-600 dark:text-stone-400">O processo é dividido em 4 passos simples e intuitivos:</p>
+                            <div className="pl-2 space-y-3">
+                              <div className="space-y-1">
+                                <p className="text-[11px] font-bold dark:text-stone-200">Passo 1: Escolha do Serviço</p>
+                                <ul className="text-[10px] text-stone-500 dark:text-stone-400 space-y-1 list-disc pl-4">
+                                  <li>Toque no botão "Agendar Agora" na Home ou no ícone de Calendário no menu inferior.</li>
+                                  <li>Categorias: Filtre por Cabelo, Unhas, Rosto, etc.</li>
+                                  <li>Serviço: Toque no serviço desejado. Você verá a duração e uma breve descrição.</li>
+                                </ul>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-[11px] font-bold dark:text-stone-200">Passo 2: Data e Horário</p>
+                                <ul className="text-[10px] text-stone-500 dark:text-stone-400 space-y-1 list-disc pl-4">
+                                  <li>Calendário: Selecione o dia desejado. Dias com bolinhas indicam disponibilidade.</li>
+                                  <li>Horários: Escolha entre os horários disponíveis (Manhã ou Tarde).</li>
+                                  <li><span className="italic">Dica: Se um horário não aparece, é porque já foi reservado por outra cliente.</span></li>
+                                </ul>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-[11px] font-bold dark:text-stone-200">Passo 3: Experiência Personalizada (Opcional)</p>
+                                <ul className="text-[10px] text-stone-500 dark:text-stone-400 space-y-1 list-disc pl-4">
+                                  <li>Ambiente: Escolha entre "Papo" ou "Zen".</li>
+                                  <li>Bebidas: Selecione sua preferência (Café, Chá, Água ou Nada).</li>
+                                  <li>Saúde: Informe alergias ou preferências de temperatura da água.</li>
+                                </ul>
+                              </div>
+                              <div className="space-y-1">
+                                <p className="text-[11px] font-bold dark:text-stone-200">Passo 4: Confirmação</p>
+                                <ul className="text-[10px] text-stone-500 dark:text-stone-400 space-y-1 list-disc pl-4">
+                                  <li>Revise todos os dados e toque em "Confirmar Reserva".</li>
+                                  <li>Pronto! Sua reserva foi enviada e você será notificada.</li>
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <p className="text-xs font-bold dark:text-white">3. Gestão de Agendamentos (Editar e Cancelar)</p>
+                            <ul className="text-[11px] text-stone-600 dark:text-stone-400 space-y-1 list-disc pl-4">
+                              <li><span className="font-bold">Para Cancelar:</span> Localize o card na Home e toque no "X".</li>
+                              <li><span className="italic">Nota: Pedimos que cancele com pelo menos 24h de antecedência.</span></li>
+                              <li><span className="font-bold">Para Editar:</span> Recomendamos cancelar o atual e realizar um novo agendamento.</li>
+                            </ul>
+                          </div>
+
+                          <div className="space-y-2">
+                            <p className="text-xs font-bold dark:text-white">4. Perfil e Dados Pessoais</p>
+                            <ul className="text-[11px] text-stone-600 dark:text-stone-400 space-y-1 list-disc pl-4">
+                              <li><span className="font-bold">Meus Dados:</span> Atualize seu nome e data de nascimento.</li>
+                              <li><span className="font-bold">Experiência Permanente:</span> Salve suas preferências para agilizar futuros agendamentos.</li>
+                              <li><span className="font-bold">Acessibilidade:</span> Personalize o modo escuro e tamanho da fonte.</li>
+                            </ul>
+                          </div>
+
+                          <div className="space-y-2">
+                            <p className="text-xs font-bold dark:text-white">5. Dicas de Ouro ✨</p>
+                            <ul className="text-[11px] text-stone-600 dark:text-stone-400 space-y-1 list-disc pl-4">
+                              <li><span className="font-bold">Check-in com Foto:</span> Ao chegar, use a foto para avisar a Ivone e agilizar o atendimento.</li>
+                              <li><span className="font-bold">Galeria:</span> Inspire-se com nossos resultados e linhas de produtos.</li>
+                              <li><span className="font-bold">Indique Amigas:</span> Use seu código para ganhar pontos extras!</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-6 border-t border-stone-100 dark:border-stone-800 space-y-2">
+                    <p className="text-xs font-bold dark:text-white">Suporte e Ouvidoria</p>
+                    <p className="text-[10px] text-stone-500 dark:text-stone-400 leading-relaxed">
+                      Caso tenha qualquer dúvida ou sugestão, utilize a seção "Ouvidoria Ivone" dentro do seu Perfil. Sua voz é fundamental para mantermos o padrão Premium do nosso Studio.
+                    </p>
+                    <div className="pt-2 text-[9px] text-stone-400 font-bold uppercase tracking-widest">
+                      <p>Ivone Studio</p>
+                      <p>Rua Olinda, 23 - São Bernardo do Campo</p>
+                      <p>WhatsApp: (11) 99730-8578</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </div>

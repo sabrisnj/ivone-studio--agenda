@@ -46,6 +46,7 @@ export interface User {
   permanentPreferences?: ClientPreferences;
   termsAccepted?: boolean;
   smartNotifications?: boolean;
+  profileImage?: string;
 }
 
 export interface ClientPreferences {
