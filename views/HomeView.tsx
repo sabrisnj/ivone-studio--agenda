@@ -3,6 +3,7 @@ import React, { useRef, useState } from 'react';
 import { useApp } from '../store';
 import { ServiceCategory, Service, Appointment } from '../types';
 import { SALON_INFO, WEEKLY_OFFERS } from '../constants';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 import { 
   Leaf,
   Sparkles,
@@ -24,7 +25,8 @@ import {
   ArrowUpRight,
   CheckCircle2,
   CreditCard,
-  Wallet
+  Wallet,
+  X
 } from 'lucide-react';
 
 interface HomeViewProps {
@@ -36,6 +38,8 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
   const { user, salonConfig, services, appointments, performCheckIn, payAppointment, weeklyOffers } = useApp();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
   
   const now = new Date();
   
@@ -74,6 +78,39 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
     if (activeApp) {
       performCheckIn(activeApp.id);
     }
+  };
+
+  const startScanner = () => {
+    setShowScanner(true);
+    setTimeout(() => {
+      const scanner = new Html5QrcodeScanner(
+        "qr-reader",
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        /* verbose= */ false
+      );
+      
+      scanner.render((decodedText) => {
+        // Check if the QR code matches the expected link or content
+        // For now, any scan will perform the check-in as requested
+        if (activeApp) {
+          performCheckIn(activeApp.id);
+          scanner.clear();
+          setShowScanner(false);
+        }
+      }, (error) => {
+        // console.warn(error);
+      });
+      
+      scannerRef.current = scanner;
+    }, 100);
+  };
+
+  const stopScanner = () => {
+    if (scannerRef.current) {
+      scannerRef.current.clear();
+      scannerRef.current = null;
+    }
+    setShowScanner(false);
   };
 
   const handlePayment = (method: 'debito' | 'credito' | 'pix') => {
@@ -131,10 +168,10 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
                       Estou no Salão
                     </button>
                     <button 
-                      onClick={() => fileInputRef.current?.click()}
+                      onClick={startScanner}
                       className="bg-black/30 backdrop-blur-md text-white border border-white/40 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
                     >
-                      <Camera size={14} /> Foto Check-in
+                      <QrCode size={14} /> Scan QR Code
                     </button>
                     <input 
                       type="file" 
@@ -317,6 +354,28 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
           </button>
         </div>
       </section>
+
+      {/* QR SCANNER MODAL */}
+      {showScanner && (
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6">
+          <div className="w-full max-w-sm bg-white dark:bg-zinc-900 rounded-[3rem] p-8 space-y-6 relative overflow-hidden">
+            <button 
+              onClick={stopScanner}
+              className="absolute top-6 right-6 p-2 bg-gray-100 dark:bg-zinc-800 rounded-full text-gray-400"
+            >
+              <X size={20} />
+            </button>
+            <div className="text-center space-y-2">
+              <h3 className="text-xl font-serif font-bold dark:text-white">Scan QR Code</h3>
+              <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Aponte para o QR Code no Studio</p>
+            </div>
+            <div id="qr-reader" className="w-full rounded-2xl overflow-hidden border-2 border-[#F5E6DA]"></div>
+            <div className="text-center">
+              <p className="text-[11px] text-stone-500 italic">O QR Code de check-in está disponível na recepção.</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
