@@ -22,8 +22,6 @@ const ProfileView: React.FC = () => {
   const [editName, setEditName] = useState(user?.name || '');
   const [editBirth, setEditBirth] = useState(user?.birthDate || '');
   const [isSaved, setIsSaved] = useState(false);
-  const [feedbackText, setFeedbackText] = useState('');
-  const [feedbackSent, setFeedbackSent] = useState(false);
 
   const [ritualPrefs, setRitualPrefs] = useState<ClientPreferences>(user?.permanentPreferences || {
     environment: 'none',
@@ -46,14 +44,6 @@ const ProfileView: React.FC = () => {
     setIsSaved(true);
     speak("Dados e preferências atualizados com sucesso.");
     setTimeout(() => setIsSaved(false), 3000);
-  };
-
-  const handleSendFeedback = () => {
-    if (!feedbackText.trim()) return;
-    sendFeedback(feedbackText);
-    setFeedbackText('');
-    setFeedbackSent(true);
-    setTimeout(() => setFeedbackSent(false), 5000);
   };
 
   const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -471,7 +461,7 @@ const ProfileView: React.FC = () => {
                   <div className="pt-6 border-t border-stone-100 dark:border-stone-800 space-y-2">
                     <p className="text-xs font-bold dark:text-white">Suporte e Ouvidoria</p>
                     <p className="text-[10px] text-stone-500 dark:text-stone-400 leading-relaxed">
-                      Caso tenha qualquer dúvida ou sugestão, utilize a seção "Ouvidoria Ivone" dentro do seu Perfil. Sua voz é fundamental para mantermos o padrão Premium do nosso Studio.
+                      Caso tenha qualquer dúvida ou sugestão, utilize a seção "Ouvidoria Ivone" dentro do menu de Atendimento (Chat). Sua voz é fundamental para mantermos o padrão Premium do nosso Studio.
                     </p>
                     <div className="pt-2 text-[9px] text-stone-400 font-bold uppercase tracking-widest">
                       <p>Ivone Studio</p>
@@ -482,36 +472,6 @@ const ProfileView: React.FC = () => {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Reclamações e Sugestões */}
-          <div className="bg-white dark:bg-stone-900 p-8 rounded-[3rem] border border-stone-100 dark:border-stone-800 space-y-6 shadow-sm">
-            <div className="flex items-center gap-5">
-              <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-900/20 text-rose-500">
-                <MessageSquare size={24} />
-              </div>
-              <div className="text-left">
-                <p className="text-base font-bold dark:text-white tracking-tight">Ouvidoria Ivone</p>
-                <p className="text-[10px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">Reclamações ou Sugestões</p>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <textarea 
-                placeholder="Como podemos melhorar sua experiência? Sua voz é fundamental para nós..."
-                value={feedbackText}
-                onChange={e => setFeedbackText(e.target.value)}
-                className="w-full p-5 bg-stone-50 dark:bg-stone-800 rounded-[2rem] text-[11px] border-2 border-transparent focus:border-studio-accent outline-none shadow-inner min-h-[120px] resize-none dark:text-white"
-              />
-              <button 
-                onClick={handleSendFeedback}
-                disabled={!feedbackText.trim() || feedbackSent}
-                className={`w-full py-5 rounded-2xl font-bold uppercase text-[10px] tracking-widest flex items-center justify-center gap-3 transition-all ${feedbackSent ? 'bg-emerald-500 text-white' : 'bg-studio-ink text-white active:scale-95 disabled:opacity-50'}`}
-              >
-                {feedbackSent ? <CheckCircle size={18}/> : <Send size={18}/>}
-                {feedbackSent ? 'Enviado com Sucesso!' : 'Enviar Feedback'}
-              </button>
-            </div>
           </div>
         </div>
       )}

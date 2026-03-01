@@ -37,16 +37,25 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   
-  const todayStr = new Date().toISOString().split('T')[0];
+  const now = new Date();
   
-  // Active appointment for today
-  const activeApp = appointments.find(a => 
-    a.clientPhone === user?.phone && 
-    a.date === todayStr && 
-    ['confirmed', 'in_service'].includes(a.status) &&
-    a.status !== 'completed' &&
-    a.status !== 'cancelled'
-  );
+  // Active appointment: within 24 hours before or up to 6 hours after start time
+  const activeApp = appointments
+    .filter(a => 
+      a.clientPhone === user?.phone && 
+      ['confirmed', 'in_service'].includes(a.status)
+    )
+    .find(a => {
+      const [year, month, day] = a.date.split('-').map(Number);
+      const [hours, minutes] = a.time.split(':').map(Number);
+      const appDate = new Date(year, month - 1, day, hours, minutes);
+      
+      const diffMs = appDate.getTime() - now.getTime();
+      const diffHours = diffMs / (1000 * 60 * 60);
+      
+      // Allow check-in starting 24 hours before, and keep visible up to 6 hours after start
+      return diffHours <= 24 && diffHours >= -6;
+    });
 
   const handlePhotoCheckIn = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -100,13 +109,14 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
             <div className="relative z-10">
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-100">Seu Agendamento de Hoje</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-100">Seu Próximo Agendamento</p>
                   <h3 className="text-xl font-serif font-bold">
                     {services.find(s => s.id === activeApp.serviceId)?.name || 'Serviço'}
                   </h3>
                 </div>
-                <div className="bg-white/30 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                  {activeApp.time}
+                <div className="bg-white/30 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest flex flex-col items-center">
+                  <span>{activeApp.date.split('-').reverse().slice(0, 2).join('/')}</span>
+                  <span>{activeApp.time}</span>
                 </div>
               </div>
 

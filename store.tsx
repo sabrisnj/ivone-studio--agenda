@@ -53,6 +53,8 @@ interface AppState {
   updateSalonConfig: (config: Partial<SalonConfig>) => void;
   updateWeeklyOffer: (day: number, offer: Partial<WeeklyOffer>) => void;
   updateUserPoints: (userId: string, points: User['points']) => void;
+  deleteUser: (userId: string) => void;
+  addUser: (user: Omit<User, 'id' | 'referralCode' | 'referrals' | 'rewards' | 'points' | 'createdAt'>) => void;
 }
 
 const AppContext = createContext<AppState | undefined>(undefined);
@@ -415,8 +417,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     speak("Check-in realizado.");
   }, [sendNotification, speak]);
 
-  const payAppointment = useCallback((id: string, method: string) => {
-    setAppointments(prev => prev.map(a => a.id === id ? { ...a, paymentStatus: 'waiting_verification' as const } : a));
+  const payAppointment = useCallback((id: string, method: 'debito' | 'credito' | 'pix' | 'cash') => {
+    setAppointments(prev => prev.map(a => a.id === id ? { ...a, paymentStatus: 'waiting_verification' as const, paymentMethod: method } : a));
     sendNotification(
       "Pagamento em Processamento ⏳",
       `Seu pagamento via ${method.toUpperCase()} foi enviado para verificação.`,
@@ -495,6 +497,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [user?.id]);
 
+  const deleteUser = useCallback((userId: string) => {
+    setAllUsers(prev => prev.filter(u => u.id !== userId));
+    if (user?.id === userId) {
+      logout();
+    }
+  }, [user?.id, logout]);
+
+  const addUser = useCallback((userData: Omit<User, 'id' | 'referralCode' | 'referrals' | 'rewards' | 'points' | 'createdAt'>) => {
+    const phone = userData.phone;
+    setAllUsers(prev => {
+      if (prev.find(u => u.phone === phone)) return prev;
+      const myCode = `IVONE-${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+      const newUser: User = {
+        ...userData,
+        id: phone,
+        referralCode: myCode,
+        referrals: [],
+        rewards: [],
+        points: { escovas: 0, manicurePedicure: 0, ciliosManutencao: 0 },
+        createdAt: new Date().toISOString()
+      };
+      return [...prev, newUser];
+    });
+  }, []);
+
   return (
     <AppContext.Provider value={{
       user, allUsers, appointments, vouchers, weeklyOffers, notifications, chatMessages, services, galleryItems, isAdmin, isBirthMonth, accessibility, salonConfig, isTyping,
@@ -502,7 +529,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updateAccessibility, updateUserData, acceptTerms, sendFeedback, sendChatMessage, markNotificationsAsRead, deleteNotification,
       performCheckIn, payAppointment, speak, rateAppointment, sendNotification, requestPushPermission, updateAppointmentPreferences,
       addGalleryItem, deleteGalleryItem, markChatAsRead,
-      addService, updateService, deleteService, updateVoucher, confirmPayment, redeemVoucher, updateSalonConfig, updateWeeklyOffer, updateUserPoints
+      addService, updateService, deleteService, updateVoucher, confirmPayment, redeemVoucher, updateSalonConfig, updateWeeklyOffer, updateUserPoints,
+      deleteUser, addUser
     }}>
       {children}
     </AppContext.Provider>

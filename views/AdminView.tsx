@@ -49,16 +49,28 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
     allUsers, appointments, confirmAppointment, completeAppointment, cancelAppointment, confirmPayment,
     sendNotification, services, galleryItems, addGalleryItem, deleteGalleryItem, addAppointment,
     addService, updateService, deleteService, vouchers, updateVoucher, redeemVoucher,
-    salonConfig, updateSalonConfig, weeklyOffers, updateWeeklyOffer, updateUserPoints
+    salonConfig, updateSalonConfig, weeklyOffers, updateWeeklyOffer, updateUserPoints,
+    logout, deleteUser, addUser, notifications, markNotificationsAsRead, deleteNotification
   } = useApp();
   
   const [activeSubView, setActiveSubView] = useState<AdminSubView>('ops');
   const [isLocked, setIsLocked] = useState(true);
   const [password, setPassword] = useState('');
+  const [showNotifs, setShowNotifs] = useState(false);
   
+  // Agenda Filter
+  const [agendaDate, setAgendaDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // Reports Filters
+  const [reportStart, setReportStart] = useState('');
+  const [reportEnd, setReportEnd] = useState('');
+
   // Forms State
   const [showQuickBook, setShowQuickBook] = useState(false);
   const [qbData, setQbData] = useState({ name: '', phone: '', serviceId: '', date: '', time: '' });
+
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [newUserData, setNewUserData] = useState({ name: '', phone: '', birthDate: '' });
 
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [editingVoucher, setEditingVoucher] = useState<Voucher | null>(null);
@@ -89,6 +101,19 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
     setQbData({ name: '', phone: '', serviceId: '', date: '', time: '' });
   };
 
+  const handleAddUser = () => {
+    if (!newUserData.name || !newUserData.phone) return;
+    addUser({
+      name: newUserData.name,
+      phone: newUserData.phone,
+      birthDate: newUserData.birthDate,
+      termsAccepted: true,
+      smartNotifications: true
+    });
+    setShowAddUser(false);
+    setNewUserData({ name: '', phone: '', birthDate: '' });
+  };
+
   const handleAddService = () => {
     addService({
       name: 'Novo Serviço',
@@ -108,21 +133,84 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
 
   // Reports Logic
   const reports = useMemo(() => {
-    const serviceCounts: Record<string, number> = {};
-    appointments.forEach(a => {
-      serviceCounts[a.serviceId] = (serviceCounts[a.serviceId] || 0) + 1;
+    const filteredApps = appointments.filter(a => {
+      if (reportStart && a.date < reportStart) return false;
+      if (reportEnd && a.date > reportEnd) return false;
+      return true;
     });
-    const topServices = Object.entries(serviceCounts)
-      .map(([id, count]) => ({ name: services.find(s => s.id === id)?.name || 'Unknown', count }))
-      .sort((a, b) => b.count - a.count);
+
+    const serviceCounts: Record<string, number> = {};
+    let totalRevenue = 0;
+    const paymentMethods: Record<string, number> = {
+      'debito': 0,
+      'credito': 0,
+      'pix': 0,
+      'cash': 0
+    };
+    const professionalRevenue: Record<string, number> = {
+      [salonConfig.professionals.prof1_nome]: 0,
+      [salonConfig.professionals.prof2_nome]: 0,
+      [salonConfig.professionals.prof3_nome]: 0
+    };
+
+    filteredApps.forEach(a => {
+      if (a.status === 'completed' || a.paymentStatus === 'paid') {
+        const service = services.find(s => s.id === a.serviceId);
+        if (service) {
+          totalRevenue += service.price;
+          serviceCounts[service.name] = (serviceCounts[service.name] || 0) + 1;
+          
+          if (a.paymentMethod) {
+            paymentMethods[a.paymentMethod] += service.price;
+          }
+
+          // Simplified professional attribution based on service category
+          let prof = salonConfig.professionals.prof1_nome;
+          if (service.category === ServiceCategory.NAILS || service.category === ServiceCategory.MASSAGE) prof = salonConfig.professionals.prof3_nome;
+          else if (service.category === ServiceCategory.FACE) prof = salonConfig.professionals.prof2_nome;
+          
+          professionalRevenue[prof] += service.price;
+        }
+      }
+    });
+
+    const currentMonth = new Date().getMonth();
+    const birthdayClients = allUsers.filter(u => {
+      if (!u.birthDate) return false;
+      return new Date(u.birthDate).getMonth() === currentMonth;
+    });
+
+    const vouchersUsed = vouchers.reduce((acc, v) => acc + v.redeemed, 0);
+
+    const now = new Date();
+    const inactive30 = allUsers.filter(u => {
+      const lastApp = appointments.filter(a => a.clientPhone === u.phone && a.status === 'completed').sort((a, b) => b.date.localeCompare(a.date))[0];
+      if (!lastApp) return true;
+      const diff = (now.getTime() - new Date(lastApp.date).getTime()) / (1000 * 60 * 60 * 24);
+      return diff > 30;
+    });
+
+    const inactive60 = allUsers.filter(u => {
+      const lastApp = appointments.filter(a => a.clientPhone === u.phone && a.status === 'completed').sort((a, b) => b.date.localeCompare(a.date))[0];
+      if (!lastApp) return true;
+      const diff = (now.getTime() - new Date(lastApp.date).getTime()) / (1000 * 60 * 60 * 24);
+      return diff > 60;
+    });
 
     return {
-      totalAppointments: appointments.length,
-      confirmed: appointments.filter(a => a.status === 'confirmed').length,
-      completed: appointments.filter(a => a.status === 'completed').length,
-      topServices
+      totalAppointments: filteredApps.length,
+      confirmed: filteredApps.filter(a => a.status === 'confirmed').length,
+      completed: filteredApps.filter(a => a.status === 'completed').length,
+      totalRevenue,
+      birthdayClients,
+      vouchersUsed,
+      inactive30: inactive30.length,
+      inactive60: inactive60.length,
+      professionalRevenue,
+      paymentMethods,
+      serviceCounts: Object.entries(serviceCounts).sort((a, b) => b[1] - a[1])
     };
-  }, [appointments, services]);
+  }, [appointments, services, allUsers, reportStart, reportEnd, salonConfig.professionals, vouchers]);
 
   if (isLocked) {
     return (
@@ -161,9 +249,54 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
           <h2 className="text-3xl font-serif font-bold text-gray-800 dark:text-white">Studio Gestão</h2>
           <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Controle Interno</p>
         </div>
-        <button onClick={() => setIsLocked(true)} className="p-3 bg-gray-100 dark:bg-zinc-800 rounded-2xl text-gray-400">
-          <Lock size={20} />
-        </button>
+        <div className="flex gap-2 relative">
+          <button 
+            onClick={() => {
+              setShowNotifs(!showNotifs);
+              if (!showNotifs) markNotificationsAsRead();
+            }} 
+            className="p-3 bg-gray-100 dark:bg-zinc-800 rounded-2xl text-gray-400 relative"
+          >
+            <Bell size={20} />
+            {notifications.some(n => !n.read) && (
+              <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white dark:border-zinc-900" />
+            )}
+          </button>
+
+          {showNotifs && (
+            <div className="absolute top-16 right-0 w-72 bg-white dark:bg-zinc-900 border border-stone-100 dark:border-stone-800 rounded-3xl shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+              <div className="p-4 border-b border-stone-100 dark:border-stone-800 flex justify-between items-center">
+                <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Notificações</span>
+                <button onClick={() => setShowNotifs(false)}><X size={14} className="text-stone-300"/></button>
+              </div>
+              <div className="max-h-80 overflow-y-auto no-scrollbar">
+                {notifications.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <p className="text-[10px] text-stone-400 italic">Nenhuma notificação</p>
+                  </div>
+                ) : (
+                  notifications.map(n => (
+                    <div key={n.id} className="p-4 border-b border-stone-50 dark:border-stone-800/50 hover:bg-stone-50 dark:hover:bg-stone-800/30 transition-colors group">
+                      <div className="flex justify-between items-start mb-1">
+                        <p className="text-[11px] font-bold dark:text-white">{n.title}</p>
+                        <button onClick={() => deleteNotification(n.id)} className="opacity-0 group-hover:opacity-100 transition-opacity"><X size={12} className="text-rose-300"/></button>
+                      </div>
+                      <p className="text-[10px] text-stone-500 dark:text-stone-400 leading-relaxed">{n.body}</p>
+                      <p className="text-[8px] text-stone-300 mt-2">{new Date(n.timestamp).toLocaleTimeString()}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          <button onClick={logout} className="p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-500 rounded-2xl" title="Encerrar Sessão">
+            <XCircle size={20} />
+          </button>
+          <button onClick={() => setIsLocked(true)} className="p-3 bg-gray-100 dark:bg-zinc-800 rounded-2xl text-gray-400">
+            <Lock size={20} />
+          </button>
+        </div>
       </header>
 
       {/* SUB-NAV */}
@@ -192,8 +325,16 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
         {/* OPERATIONS / AGENDA */}
         {activeSubView === 'ops' && (
           <div className="space-y-8">
-            <div className="flex justify-between items-center px-2">
-              <h3 className="text-xl font-serif font-bold dark:text-white">Horários</h3>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-2">
+              <div className="flex items-center gap-4">
+                <h3 className="text-xl font-serif font-bold dark:text-white">Horários</h3>
+                <input 
+                  type="date" 
+                  value={agendaDate} 
+                  onChange={e => setAgendaDate(e.target.value)}
+                  className="p-2 bg-white dark:bg-zinc-800 border border-stone-100 dark:border-stone-700 rounded-xl text-xs outline-none"
+                />
+              </div>
               <button onClick={() => setShowQuickBook(true)} className="bg-[#86BDB1] text-studio-ink px-5 py-3 rounded-2xl text-[9px] font-bold uppercase flex items-center gap-2 shadow-lg">
                 <PlusCircle size={16}/> Agendar
               </button>
@@ -222,7 +363,10 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
             )}
 
             <div className="grid gap-4">
-              {appointments.filter(a => a.status !== 'completed' && a.status !== 'cancelled').reverse().map(app => {
+              {appointments
+                .filter(a => a.date === agendaDate && a.status !== 'cancelled')
+                .sort((a, b) => a.time.localeCompare(b.time))
+                .map(app => {
                 const service = services.find(s => s.id === app.serviceId);
                 return (
                   <div key={app.id} className="bg-white dark:bg-zinc-900 border border-[#F5E6DA] dark:border-zinc-800 p-7 rounded-[3rem] shadow-sm space-y-4">
@@ -385,13 +529,24 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
                       <h4 className="font-bold text-sm dark:text-white">{v.name}</h4>
                       <p className="text-[10px] text-gray-600">{v.description}</p>
                     </div>
-                    <button onClick={() => redeemVoucher(v.id)} className="p-3 bg-emerald-50 text-emerald-500 rounded-xl shadow-sm">
-                      <CheckCircle size={20}/>
-                    </button>
+                    <div className="flex gap-2">
+                       <button onClick={() => redeemVoucher(v.id)} className="p-3 bg-emerald-50 text-emerald-500 rounded-xl shadow-sm">
+                         <CheckCircle size={20}/>
+                       </button>
+                    </div>
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
                       <div className="h-full bg-[#D4B499]" style={{ width: `${(v.redeemed / v.limit) * 100}%` }} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                       <input 
+                         type="number" 
+                         value={v.limit} 
+                         onChange={e => updateVoucher(v.id, { limit: Number(e.target.value) })}
+                         className="w-16 p-2 bg-gray-50 dark:bg-zinc-800 rounded-lg text-xs text-center border border-stone-100 dark:border-stone-700"
+                       />
+                       <span className="text-[10px] font-bold text-gray-600">Limite</span>
                     </div>
                     <span className="text-[10px] font-bold text-gray-600">{v.redeemed}/{v.limit}</span>
                   </div>
@@ -404,7 +559,28 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
         {/* USERS / CLIENTS */}
         {activeSubView === 'users' && (
           <div className="space-y-8">
-            <h3 className="text-xl font-serif font-bold dark:text-white px-2">Base de Clientes</h3>
+            <div className="flex justify-between items-center px-2">
+              <h3 className="text-xl font-serif font-bold dark:text-white">Base de Clientes</h3>
+              <button onClick={() => setShowAddUser(true)} className="bg-[#D4B499] text-studio-ink px-5 py-3 rounded-2xl text-[9px] font-bold uppercase flex items-center gap-2 shadow-lg">
+                <Plus size={16}/> Novo Cliente
+              </button>
+            </div>
+
+            {showAddUser && (
+               <div className="bg-[#FAF7F5] dark:bg-zinc-900 border-2 border-[#D4B499] p-8 rounded-[3rem] shadow-2xl space-y-6">
+                 <div className="flex justify-between items-center pb-4 border-b border-[#D4B499]/20">
+                    <h4 className="text-[10px] font-black uppercase text-[#D4B499]">Novo Cliente</h4>
+                    <button onClick={() => setShowAddUser(false)}><X size={20} className="text-gray-400"/></button>
+                 </div>
+                 <div className="grid gap-3">
+                    <input placeholder="Nome" value={newUserData.name} onChange={e => setNewUserData({...newUserData, name: e.target.value})} className="w-full p-4 bg-white dark:bg-zinc-800 rounded-2xl text-xs outline-none" />
+                    <input placeholder="WhatsApp" value={newUserData.phone} onChange={e => setNewUserData({...newUserData, phone: e.target.value})} className="w-full p-4 bg-white dark:bg-zinc-800 rounded-2xl text-xs outline-none" />
+                    <input type="date" placeholder="Nascimento" value={newUserData.birthDate} onChange={e => setNewUserData({...newUserData, birthDate: e.target.value})} className="w-full p-4 bg-white dark:bg-zinc-800 rounded-2xl text-xs outline-none" />
+                 </div>
+                 <button onClick={handleAddUser} className="w-full bg-[#D4B499] text-studio-ink py-5 rounded-[2rem] font-bold uppercase text-[10px] tracking-widest shadow-xl">Cadastrar</button>
+               </div>
+            )}
+
             <div className="grid gap-4">
               {allUsers.map(u => (
                 <div key={u.id} className="bg-white dark:bg-zinc-900 border border-[#F5E6DA] p-6 rounded-[2.5rem] shadow-sm space-y-4">
@@ -413,8 +589,13 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
                       <h4 className="font-bold text-sm dark:text-white">{u.name}</h4>
                       <p className="text-[10px] text-gray-600">{u.phone}</p>
                     </div>
-                    <div className="bg-[#FAF7F5] px-3 py-1 rounded-lg text-[9px] font-bold text-[#D4B499]">
-                      {u.points.escovas + u.points.manicurePedicure + u.points.ciliosManutencao} pts
+                    <div className="flex gap-2">
+                      <div className="bg-[#FAF7F5] px-3 py-1 rounded-lg text-[9px] font-bold text-[#D4B499]">
+                        {u.points.escovas + u.points.manicurePedicure + u.points.ciliosManutencao} pts
+                      </div>
+                      <button onClick={() => deleteUser(u.id)} className="p-2 bg-red-50 text-red-400 rounded-lg">
+                        <Trash2 size={14}/>
+                      </button>
                     </div>
                   </div>
                   {u.permanentPreferences && (
@@ -445,7 +626,7 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
                <div className="space-y-4">
                   <input placeholder="Link da Imagem" value={galleryUrl} onChange={e => setGalleryUrl(e.target.value)} className="w-full p-4 bg-gray-50 rounded-2xl text-xs" />
                   <div className="grid grid-cols-2 gap-2">
-                     {['Cabelo', 'Unhas', 'Cílios', 'Antes e Depois'].map(cat => (
+                     {['Cabelo', 'Unhas', 'Cílios', 'Antes e Depois', 'Linhas de Produtos'].map(cat => (
                        <button key={cat} onClick={() => setGalleryCat(cat as any)} className={`py-3 rounded-xl text-[9px] font-bold uppercase border ${galleryCat === cat ? 'bg-[#D4B499] text-studio-ink' : 'bg-white text-gray-600'}`}>{cat}</button>
                      ))}
                   </div>
@@ -596,29 +777,104 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
         {/* REPORTS */}
         {activeSubView === 'reports' && (
           <div className="space-y-8">
-            <h3 className="text-xl font-serif font-bold dark:text-white px-2">Relatórios</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white dark:bg-zinc-900 p-6 rounded-[2.5rem] border border-[#F5E6DA] text-center space-y-1">
-                <p className="text-[9px] font-bold text-gray-400 uppercase">Total Reservas</p>
-                <p className="text-3xl font-serif font-bold text-[#D4B499]">{reports.totalAppointments}</p>
-              </div>
-              <div className="bg-white dark:bg-zinc-900 p-6 rounded-[2.5rem] border border-[#F5E6DA] text-center space-y-1">
-                <p className="text-[9px] font-bold text-gray-400 uppercase">Concluídos</p>
-                <p className="text-3xl font-serif font-bold text-emerald-500">{reports.completed}</p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-2">
+              <h3 className="text-xl font-serif font-bold dark:text-white">Relatórios Avançados</h3>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <input 
+                  type="date" 
+                  value={reportStart} 
+                  onChange={e => setReportStart(e.target.value)}
+                  className="flex-1 p-2 bg-white dark:bg-zinc-800 border border-stone-100 dark:border-stone-700 rounded-xl text-[10px] outline-none"
+                />
+                <input 
+                  type="date" 
+                  value={reportEnd} 
+                  onChange={e => setReportEnd(e.target.value)}
+                  className="flex-1 p-2 bg-white dark:bg-zinc-800 border border-stone-100 dark:border-stone-700 rounded-xl text-[10px] outline-none"
+                />
               </div>
             </div>
-            <div className="bg-white dark:bg-zinc-900 p-8 rounded-[3rem] border border-[#F5E6DA] space-y-6">
-               <h4 className="text-sm font-bold dark:text-white">Serviços mais procurados</h4>
-               <div className="space-y-4">
-                  {reports.topServices.map((s, idx) => (
-                    <div key={idx} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-bold text-gray-300">0{idx + 1}</span>
-                        <span className="text-xs font-medium text-gray-700 dark:text-gray-200">{s.name}</span>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="bg-white dark:bg-zinc-900 p-6 rounded-[2.5rem] border border-[#F5E6DA] text-center space-y-1">
+                <p className="text-[9px] font-bold text-gray-400 uppercase">Total Reservas</p>
+                <p className="text-2xl font-serif font-bold text-[#D4B499]">{reports.totalAppointments}</p>
+              </div>
+              <div className="bg-white dark:bg-zinc-900 p-6 rounded-[2.5rem] border border-[#F5E6DA] text-center space-y-1">
+                <p className="text-[9px] font-bold text-gray-400 uppercase">Faturamento</p>
+                <p className="text-2xl font-serif font-bold text-emerald-500">R$ {reports.totalRevenue}</p>
+              </div>
+              <div className="bg-white dark:bg-zinc-900 p-6 rounded-[2.5rem] border border-[#F5E6DA] text-center space-y-1">
+                <p className="text-[9px] font-bold text-gray-400 uppercase">Vouchers</p>
+                <p className="text-2xl font-serif font-bold text-blue-500">{reports.vouchersUsed}</p>
+              </div>
+              <div className="bg-white dark:bg-zinc-900 p-6 rounded-[2.5rem] border border-[#F5E6DA] text-center space-y-1">
+                <p className="text-[9px] font-bold text-gray-400 uppercase">Aniversários</p>
+                <p className="text-2xl font-serif font-bold text-rose-500">{reports.birthdayClients.length}</p>
+              </div>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-6">
+               <div className="bg-white dark:bg-zinc-900 p-8 rounded-[3rem] border border-[#F5E6DA] space-y-6">
+                  <h4 className="text-sm font-bold dark:text-white flex items-center gap-2"><Scissors size={16}/> Serviços por Tipo</h4>
+                  <div className="space-y-4">
+                     {reports.serviceCounts.map(([name, count], idx) => (
+                       <div key={idx} className="flex items-center justify-between">
+                         <span className="text-xs font-medium text-gray-700 dark:text-gray-200">{name}</span>
+                         <span className="text-[10px] font-bold bg-gray-50 dark:bg-zinc-800 px-2 py-1 rounded-lg text-gray-400">{count} agend.</span>
+                       </div>
+                     ))}
+                  </div>
+               </div>
+
+               <div className="bg-white dark:bg-zinc-900 p-8 rounded-[3rem] border border-[#F5E6DA] space-y-6">
+                  <h4 className="text-sm font-bold dark:text-white flex items-center gap-2"><CreditCard size={16}/> Faturamento Profissional</h4>
+                  <div className="space-y-4">
+                     {Object.entries(reports.professionalRevenue).map(([name, revenue], idx) => (
+                       <div key={idx} className="flex items-center justify-between">
+                         <span className="text-xs font-medium text-gray-700 dark:text-gray-200">{name}</span>
+                         <span className="text-[10px] font-bold text-emerald-500">R$ {revenue}</span>
+                       </div>
+                     ))}
+                  </div>
+                  <div className="pt-4 border-t border-stone-100 dark:border-stone-800 space-y-3">
+                    <p className="text-[9px] font-bold text-stone-400 uppercase">Por Método de Pagamento</p>
+                    {Object.entries(reports.paymentMethods).map(([method, value]) => (
+                      <div key={method} className="flex justify-between items-center">
+                        <span className="text-[10px] text-stone-500 uppercase">{method}</span>
+                        <span className="text-[10px] font-bold dark:text-white">R$ {value}</span>
                       </div>
-                      <span className="text-[10px] font-bold bg-gray-50 px-2 py-1 rounded-lg text-gray-400">{s.count} agend.</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+               </div>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-6">
+               <div className="bg-white dark:bg-zinc-900 p-8 rounded-[3rem] border border-[#F5E6DA] space-y-6">
+                  <h4 className="text-sm font-bold dark:text-white flex items-center gap-2"><Users size={16}/> Retenção de Clientes</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                     <div className="bg-stone-50 dark:bg-zinc-800 p-4 rounded-2xl text-center">
+                        <p className="text-[8px] font-bold text-gray-400 uppercase">Sem visita +30d</p>
+                        <p className="text-xl font-bold text-amber-500">{reports.inactive30}</p>
+                     </div>
+                     <div className="bg-stone-50 dark:bg-zinc-800 p-4 rounded-2xl text-center">
+                        <p className="text-[8px] font-bold text-gray-400 uppercase">Sem visita +60d</p>
+                        <p className="text-xl font-bold text-rose-500">{reports.inactive60}</p>
+                     </div>
+                  </div>
+               </div>
+
+               <div className="bg-white dark:bg-zinc-900 p-8 rounded-[3rem] border border-[#F5E6DA] space-y-6">
+                  <h4 className="text-sm font-bold dark:text-white flex items-center gap-2"><Calendar size={16}/> Aniversariantes do Mês</h4>
+                  <div className="max-h-40 overflow-y-auto no-scrollbar space-y-3">
+                     {reports.birthdayClients.map(u => (
+                       <div key={u.id} className="flex items-center justify-between p-3 bg-stone-50 dark:bg-zinc-800 rounded-xl">
+                         <span className="text-xs font-medium dark:text-white">{u.name}</span>
+                         <span className="text-[10px] text-rose-400 font-bold">{u.birthDate.split('-').reverse().slice(0, 2).join('/')}</span>
+                       </div>
+                     ))}
+                     {reports.birthdayClients.length === 0 && <p className="text-xs text-gray-400 italic">Nenhum aniversariante este mês.</p>}
+                  </div>
                </div>
             </div>
           </div>

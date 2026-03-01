@@ -168,6 +168,7 @@ export interface Appointment {
   time: string;
   status: 'pending' | 'confirmed' | 'cancelled' | 'request_cancellation' | 'completed' | 'in_service';
   paymentStatus: 'unpaid' | 'waiting_verification' | 'paid';
+  paymentMethod?: 'debito' | 'credito' | 'pix' | 'cash';
   checkInStatus: 'none' | 'pending_preferences' | 'checked_in';
   checkInPhoto?: string;
   preferences?: ClientPreferences;
