@@ -35,14 +35,17 @@ import {
   Bell,
   Check,
   ChevronRight,
-  ChevronDown
+  ChevronDown,
+  Award,
+  Instagram,
+  Gift
 } from 'lucide-react';
 
 interface AdminViewProps {
   onGoToChat?: () => void;
 }
 
-type AdminSubView = 'ops' | 'services' | 'offers' | 'vouchers' | 'users' | 'gallery' | 'config' | 'reports';
+type AdminSubView = 'ops' | 'services' | 'offers' | 'vouchers' | 'users' | 'gallery' | 'config' | 'reports' | 'loyalty';
 
 const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
   const { 
@@ -57,6 +60,7 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
   const [isLocked, setIsLocked] = useState(true);
   const [password, setPassword] = useState('');
   const [showNotifs, setShowNotifs] = useState(false);
+  const [showHoursConfig, setShowHoursConfig] = useState(false);
   
   // Agenda Filter
   const [agendaDate, setAgendaDate] = useState(new Date().toISOString().split('T')[0]);
@@ -302,11 +306,12 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
       {/* SUB-NAV */}
       <div className="flex gap-2 overflow-x-auto no-scrollbar bg-gray-100 dark:bg-zinc-900 p-1.5 rounded-[2rem] border border-[#F5E6DA]/30">
         {[
-          {id: 'ops', label: 'Agenda', icon: Calendar},
+          {id: 'ops', label: 'Agenda', icon: Calendar, badge: appointments.filter(a => a.status === 'pending').length},
           {id: 'services', label: 'Serviços', icon: Scissors},
           {id: 'offers', label: 'Promo', icon: Tag},
           {id: 'vouchers', label: 'Vouchers', icon: Ticket},
           {id: 'users', label: 'Clientes', icon: Users},
+          {id: 'loyalty', label: 'Clube', icon: Award},
           {id: 'gallery', label: 'Galeria', icon: ImageIcon},
           {id: 'config', label: 'Config', icon: Settings},
           {id: 'reports', label: 'Relatórios', icon: BarChart3}
@@ -314,9 +319,14 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
           <button 
             key={nav.id}
             onClick={() => setActiveSubView(nav.id as any)}
-            className={`px-6 py-4 rounded-3xl text-[9px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap ${activeSubView === nav.id ? 'bg-white dark:bg-zinc-800 text-[#D4B499] shadow-md' : 'text-gray-400'}`}
+            className={`px-6 py-4 rounded-3xl text-[9px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap relative ${activeSubView === nav.id ? 'bg-white dark:bg-zinc-800 text-[#D4B499] shadow-md' : 'text-gray-400'}`}
           >
             <nav.icon size={14}/> {nav.label}
+            {nav.badge ? (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 text-white text-[8px] flex items-center justify-center rounded-full border border-white dark:border-zinc-900">
+                {nav.badge}
+              </span>
+            ) : null}
           </button>
         ))}
       </div>
@@ -335,10 +345,98 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
                   className="p-2 bg-white dark:bg-zinc-800 border border-stone-100 dark:border-stone-700 rounded-xl text-xs outline-none"
                 />
               </div>
-              <button onClick={() => setShowQuickBook(true)} className="bg-[#86BDB1] text-studio-ink px-5 py-3 rounded-2xl text-[9px] font-bold uppercase flex items-center gap-2 shadow-lg">
-                <PlusCircle size={16}/> Agendar
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => setShowHoursConfig(!showHoursConfig)} 
+                  className="bg-white dark:bg-zinc-800 text-gray-600 dark:text-gray-300 border border-stone-100 dark:border-stone-700 px-5 py-3 rounded-2xl text-[9px] font-bold uppercase flex items-center gap-2 shadow-sm"
+                >
+                  <Clock size={16}/> Horários
+                </button>
+                <button onClick={() => setShowQuickBook(true)} className="bg-[#86BDB1] text-studio-ink px-5 py-3 rounded-2xl text-[9px] font-bold uppercase flex items-center gap-2 shadow-lg">
+                  <PlusCircle size={16}/> Agendar
+                </button>
+              </div>
             </div>
+
+            {showHoursConfig && (
+              <div className="bg-white dark:bg-zinc-900 border border-[#F5E6DA] p-8 rounded-[3rem] shadow-sm space-y-6 animate-in slide-in-from-top-4 duration-300">
+                <div className="flex justify-between items-center pb-4 border-b border-[#F5E6DA]/30">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-[#D4B499]">Configurar Funcionamento</h4>
+                  <button onClick={() => setShowHoursConfig(false)}><X size={20} className="text-gray-400"/></button>
+                </div>
+                
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Dias de Atendimento</p>
+                    <div className="flex flex-wrap gap-2">
+                      {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map((day, idx) => {
+                        const dayValue = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'][idx];
+                        const isActive = salonConfig.businessHours.days.includes(dayValue);
+                        return (
+                          <button
+                            key={day}
+                            onClick={() => {
+                              const newDays = isActive 
+                                ? salonConfig.businessHours.days.filter(d => d !== dayValue)
+                                : [...salonConfig.businessHours.days, dayValue];
+                              updateSalonConfig({ businessHours: { ...salonConfig.businessHours, days: newDays } });
+                            }}
+                            className={`px-4 py-2 rounded-xl text-[10px] font-bold transition-all ${isActive ? 'bg-[#D4B499] text-white' : 'bg-gray-50 text-gray-400'}`}
+                          >
+                            {day}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[8px] font-bold text-gray-400 uppercase ml-1">Início</label>
+                      <input 
+                        type="time" 
+                        value={salonConfig.businessHours.start} 
+                        onChange={e => updateSalonConfig({ businessHours: { ...salonConfig.businessHours, start: e.target.value } })}
+                        className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-xs outline-none border border-transparent focus:border-[#D4B499]" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[8px] font-bold text-gray-400 uppercase ml-1">Término</label>
+                      <input 
+                        type="time" 
+                        value={salonConfig.businessHours.end} 
+                        onChange={e => updateSalonConfig({ businessHours: { ...salonConfig.businessHours, end: e.target.value } })}
+                        className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-xs outline-none border border-transparent focus:border-[#D4B499]" 
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 pt-4 border-t border-stone-50 dark:border-stone-800">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Intervalo (Almoço)</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[8px] font-bold text-gray-400 uppercase ml-1">Início Intervalo</label>
+                        <input 
+                          type="time" 
+                          value={salonConfig.businessHours.breakStart} 
+                          onChange={e => updateSalonConfig({ businessHours: { ...salonConfig.businessHours, breakStart: e.target.value } })}
+                          className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-xs outline-none border border-transparent focus:border-[#D4B499]" 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[8px] font-bold text-gray-400 uppercase ml-1">Fim Intervalo</label>
+                        <input 
+                          type="time" 
+                          value={salonConfig.businessHours.breakEnd} 
+                          onChange={e => updateSalonConfig({ businessHours: { ...salonConfig.businessHours, breakEnd: e.target.value } })}
+                          className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-xs outline-none border border-transparent focus:border-[#D4B499]" 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {showQuickBook && (
                <div className="bg-[#FAF7F5] dark:bg-zinc-900 border-2 border-[#86BDB1] p-8 rounded-[3rem] shadow-2xl space-y-6">
@@ -360,6 +458,50 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
                  </div>
                  <button onClick={handleQuickBook} className="w-full bg-[#86BDB1] text-studio-ink py-5 rounded-[2rem] font-bold uppercase text-[10px] tracking-widest shadow-xl">Confirmar</button>
                </div>
+            )}
+
+            {/* PENDING APPROVALS SECTION */}
+            {appointments.some(a => a.status === 'pending') && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 px-2">
+                  <div className="w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-rose-500">Solicitações Pendentes</h4>
+                </div>
+                <div className="grid gap-4">
+                  {appointments.filter(a => a.status === 'pending').map(app => {
+                    const service = services.find(s => s.id === app.serviceId);
+                    return (
+                      <div key={app.id} className="bg-rose-50/30 dark:bg-rose-900/10 border border-rose-100 dark:border-rose-900/20 p-6 rounded-[2.5rem] shadow-sm space-y-4">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-1">
+                            <span className="text-[8px] font-bold text-rose-400 uppercase tracking-[0.2em]">{service?.name}</span>
+                            <h4 className="text-base font-serif font-bold dark:text-white">{app.clientName}</h4>
+                            <p className="text-[9px] text-stone-500 font-medium flex items-center gap-1"><Phone size={10}/> {app.clientPhone}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button onClick={() => confirmAppointment(app.id)} className="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-lg" title="Aprovar">
+                              <Check size={20}/>
+                            </button>
+                            <button onClick={() => cancelAppointment(app.id)} className="w-10 h-10 bg-white dark:bg-zinc-800 text-rose-400 border border-rose-100 dark:border-rose-900/30 rounded-xl flex items-center justify-center shadow-sm" title="Recusar">
+                              <X size={20}/>
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex gap-3 bg-white/50 dark:bg-zinc-800/50 p-3 rounded-xl border border-rose-100/50 dark:border-rose-900/20">
+                          <div className="flex-1">
+                            <p className="text-[7px] font-bold text-stone-400 uppercase">Data</p>
+                            <p className="text-[10px] font-bold dark:text-stone-200">{app.date.split('-').reverse().join('/')}</p>
+                          </div>
+                          <div className="flex-1 border-l border-rose-100 dark:border-rose-900/20 pl-3">
+                            <p className="text-[7px] font-bold text-stone-400 uppercase">Hora</p>
+                            <p className="text-[10px] font-bold dark:text-stone-200">{app.time}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
 
             <div className="grid gap-4">
@@ -615,6 +757,129 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* LOYALTY CLUB MANAGEMENT */}
+        {activeSubView === 'loyalty' && (
+          <div className="space-y-8">
+            <div className="px-2">
+              <h3 className="text-xl font-serif font-bold dark:text-white">Clube de Pontos</h3>
+              <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest">Gerencie benefícios e cartões fidelidade</p>
+            </div>
+
+            {/* Social Media & Referral */}
+            <div className="grid gap-6">
+              <div className="bg-white dark:bg-zinc-900 border border-[#F5E6DA] p-8 rounded-[3rem] shadow-sm space-y-6">
+                <div className="flex items-center gap-3 text-rose-500">
+                  <Instagram size={20} />
+                  <h4 className="text-sm font-bold uppercase tracking-tight">Social Media Star</h4>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Desconto (%)</label>
+                    <input 
+                      value={salonConfig.loyaltyClub.socialMediaStar.discount} 
+                      onChange={e => updateSalonConfig({ loyaltyClub: { ...salonConfig.loyaltyClub, socialMediaStar: { ...salonConfig.loyaltyClub.socialMediaStar, discount: e.target.value } } })}
+                      className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-xs outline-none border border-transparent focus:border-rose-300" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Regra / Texto</label>
+                    <textarea 
+                      value={salonConfig.loyaltyClub.socialMediaStar.rule} 
+                      onChange={e => updateSalonConfig({ loyaltyClub: { ...salonConfig.loyaltyClub, socialMediaStar: { ...salonConfig.loyaltyClub.socialMediaStar, rule: e.target.value } } })}
+                      className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-xs outline-none border border-transparent focus:border-rose-300 h-24" 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white dark:bg-zinc-900 border border-[#F5E6DA] p-8 rounded-[3rem] shadow-sm space-y-6">
+                <div className="flex items-center gap-3 text-emerald-500">
+                  <Gift size={20} />
+                  <h4 className="text-sm font-bold uppercase tracking-tight">Indique e Ganhe</h4>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Desconto (%)</label>
+                    <input 
+                      value={salonConfig.loyaltyClub.referral.discount} 
+                      onChange={e => updateSalonConfig({ loyaltyClub: { ...salonConfig.loyaltyClub, referral: { ...salonConfig.loyaltyClub.referral, discount: e.target.value } } })}
+                      className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-xs outline-none border border-transparent focus:border-emerald-300" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Regra / Texto</label>
+                    <textarea 
+                      value={salonConfig.loyaltyClub.referral.rule} 
+                      onChange={e => updateSalonConfig({ loyaltyClub: { ...salonConfig.loyaltyClub, referral: { ...salonConfig.loyaltyClub.referral, rule: e.target.value } } })}
+                      className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-xs outline-none border border-transparent focus:border-emerald-300 h-24" 
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Loyalty Cards */}
+            <div className="space-y-6">
+              <div className="flex justify-between items-center px-2">
+                <h4 className="text-sm font-bold dark:text-white uppercase tracking-widest">Cartões de Pontos</h4>
+              </div>
+              <div className="grid gap-4">
+                {salonConfig.loyaltyClub.cards.map((card, idx) => (
+                  <div key={card.id} className="bg-white dark:bg-zinc-900 border border-[#F5E6DA] p-8 rounded-[3rem] shadow-sm space-y-6">
+                    <div className="flex justify-between items-center">
+                      <h5 className="text-xs font-bold text-[#D4B499] uppercase tracking-widest">Cartão {idx + 1}</h5>
+                      <span className="text-[8px] font-bold bg-gray-100 px-2 py-1 rounded-lg text-gray-400 uppercase">{card.category}</span>
+                    </div>
+                    <div className="grid gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Nome do Cartão</label>
+                        <input 
+                          value={card.name} 
+                          onChange={e => {
+                            const newCards = [...salonConfig.loyaltyClub.cards];
+                            newCards[idx] = { ...card, name: e.target.value };
+                            updateSalonConfig({ loyaltyClub: { ...salonConfig.loyaltyClub, cards: newCards } });
+                          }}
+                          className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-xs outline-none" 
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Meta (Procedimentos)</label>
+                          <input 
+                            type="number"
+                            value={card.target} 
+                            onChange={e => {
+                              const newCards = [...salonConfig.loyaltyClub.cards];
+                              newCards[idx] = { ...card, target: Number(e.target.value) };
+                              updateSalonConfig({ loyaltyClub: { ...salonConfig.loyaltyClub, cards: newCards } });
+                            }}
+                            className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-xs outline-none" 
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Prêmio</label>
+                          <input 
+                            value={card.reward} 
+                            onChange={e => {
+                              const newCards = [...salonConfig.loyaltyClub.cards];
+                              newCards[idx] = { ...card, reward: e.target.value };
+                              updateSalonConfig({ loyaltyClub: { ...salonConfig.loyaltyClub, cards: newCards } });
+                            }}
+                            className="w-full p-4 bg-gray-50 dark:bg-zinc-800 rounded-2xl text-xs outline-none" 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <button onClick={() => alert('Configurações do Clube salvas!')} className="w-full bg-[#D4B499] text-studio-ink py-5 rounded-[2rem] font-bold uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 shadow-xl"><Save size={16}/> Salvar Clube de Pontos</button>
           </div>
         )}
 

@@ -97,6 +97,14 @@ export interface WeeklyOffer {
   active: boolean;
 }
 
+export interface LoyaltyCardConfig {
+  id: string;
+  name: string;
+  target: number;
+  reward: string;
+  category: string;
+}
+
 export interface SalonConfig {
   pointsPerService: number;
   pointsTarget: number;
@@ -104,6 +112,17 @@ export interface SalonConfig {
   pixPrepayment: boolean;
   pixName: string;
   businessHours: BusinessHours;
+  loyaltyClub: {
+    socialMediaStar: {
+      discount: string;
+      rule: string;
+    };
+    referral: {
+      discount: string;
+      rule: string;
+    };
+    cards: LoyaltyCardConfig[];
+  };
   dynamicText: {
     heroTitle: string;
     heroSubtitle: string;

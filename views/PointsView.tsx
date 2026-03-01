@@ -5,18 +5,39 @@ import { useApp } from '../store';
 import { Award, Sparkles, Scissors, Footprints, Gift, Share2, Users, Copy, CheckCircle2, Clock, HelpCircle, Ticket, Instagram } from 'lucide-react';
 
 const PointsView: React.FC = () => {
-  const { user, speak } = useApp();
+  const { user, speak, salonConfig } = useApp();
 
   if (!user) return null;
 
-  const rules = [
-    { id: 'escovas', title: 'Minhas Escovas', current: user.points.escovas, total: 2, reward: '15% OFF Próxima', icon: Scissors, color: 'bg-rose-50 text-rose-500' },
-    { id: 'unhas', title: 'Manicure + Pedicure', current: user.points.manicurePedicure, total: 2, reward: 'Spa dos Pés Grátis', icon: Footprints, color: 'bg-amber-50 text-amber-500' },
-    { id: 'cilios', title: 'Extensão de Cílios', current: user.points.ciliosManutencao, total: 2, reward: 'Massagem Facial Grátis', icon: Sparkles, color: 'bg-purple-50 text-purple-500' }
-  ];
+  const rules = salonConfig.loyaltyClub.cards.map(card => {
+    let current = 0;
+    if (card.id === 'escovas') current = user.points.escovas;
+    else if (card.id === 'unhas') current = user.points.manicurePedicure;
+    else if (card.id === 'cilios') current = user.points.ciliosManutencao;
+    
+    let icon = Scissors;
+    let color = 'bg-rose-50 text-rose-500';
+    
+    if (card.category === 'Nails') {
+      icon = Footprints;
+      color = 'bg-amber-50 text-amber-500';
+    } else if (card.category === 'Lashes') {
+      icon = Sparkles;
+      color = 'bg-purple-50 text-purple-500';
+    }
+
+    return {
+      ...card,
+      current,
+      total: card.target,
+      icon,
+      color,
+      title: card.name
+    };
+  });
 
   const handleShare = async () => {
-    const text = `Oi! Adorei o Studio Ivone! Use meu código ${user.referralCode} ao baixar o app e ganhe 10% de desconto no seu primeiro serviço! 💖\n\nPoste sua experiência e marque @ivonehairstudio para ganhar +2% OFF extra! 📸✨`;
+    const text = `Oi! Adorei o Studio Ivone! Use meu código ${user.referralCode} ao baixar o app e ganhe ${salonConfig.loyaltyClub.referral.discount} de desconto no seu primeiro serviço! 💖\n\nPoste sua experiência e marque @ivonehairstudio para ganhar +${salonConfig.loyaltyClub.socialMediaStar.discount} OFF extra! 📸✨`;
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Presente Studio Ivone', text: text, url: window.location.href });
@@ -46,14 +67,14 @@ const PointsView: React.FC = () => {
           </div>
           <div className="flex-1">
             <h3 className="text-sm font-bold text-studio-ink dark:text-white uppercase tracking-tight">Social Media Star</h3>
-            <p className="text-[10px] text-stone-500 font-medium">Ganhe 2% OFF Extra</p>
+            <p className="text-[10px] text-stone-500 font-medium">Ganhe {salonConfig.loyaltyClub.socialMediaStar.discount} OFF Extra</p>
           </div>
           <div className="bg-rose-500 text-white text-[10px] font-black px-3 py-1 rounded-full">
             NOVO
           </div>
         </div>
         <p className="text-[11px] text-stone-600 dark:text-stone-400 italic leading-relaxed relative z-10">
-          Poste uma foto ou story do seu resultado, marque <span className="font-bold text-rose-500">@ivonehairstudio</span> e mostre para a Ivone no checkout para validar seu desconto de 2%!
+          {salonConfig.loyaltyClub.socialMediaStar.rule}
         </p>
         <Sparkles className="absolute -right-4 -bottom-4 text-rose-500/10" size={100} />
       </section>
@@ -66,14 +87,14 @@ const PointsView: React.FC = () => {
                   <Gift size={28} />
                </div>
                <div>
-                  <h3 id="referral-title" className="text-xl font-serif font-medium leading-tight">Ganhe 10% OFF!</h3>
+                  <h3 id="referral-title" className="text-xl font-serif font-medium leading-tight">Ganhe {salonConfig.loyaltyClub.referral.discount} OFF!</h3>
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-80">Indique suas melhores amigas</p>
                </div>
             </div>
             
             <div className="bg-white/10 p-5 rounded-2xl border border-white/10 backdrop-blur-sm space-y-2">
               <p className="text-[11px] leading-relaxed opacity-90 font-medium italic font-serif">
-                Regra: Sua amiga deve baixar o app, realizar um procedimento e o voucher será validado pela Ivone no sistema!
+                {salonConfig.loyaltyClub.referral.rule}
               </p>
             </div>
 

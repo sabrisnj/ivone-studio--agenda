@@ -128,6 +128,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         breakStart: '12:00',
         breakEnd: '13:00',
       },
+      loyaltyClub: {
+        socialMediaStar: {
+          discount: '2%',
+          rule: 'Poste uma foto ou story do seu resultado, marque @ivonehairstudio e mostre para a Ivone no checkout para validar seu desconto de 2%!'
+        },
+        referral: {
+          discount: '10%',
+          rule: 'Regra: Sua amiga deve baixar o app, realizar um procedimento e o voucher será validado pela Ivone no sistema!'
+        },
+        cards: [
+          { id: 'escovas', name: 'Minhas Escovas', target: 2, reward: '15% OFF Próxima', category: 'Hair' },
+          { id: 'unhas', name: 'Manicure + Pedicure', target: 2, reward: 'Spa dos Pés Grátis', category: 'Nails' },
+          { id: 'cilios', name: 'Extensão de Cílios', target: 2, reward: 'Massagem Facial Grátis', category: 'Lashes' }
+        ]
+      },
       dynamicText: {
         heroTitle: "The Ivory Experience",
         heroSubtitle: "Design de beleza sob medida para realçar sua essência.",

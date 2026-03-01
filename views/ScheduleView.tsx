@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useApp } from '../store';
 import { ServiceCategory, ClientPreferences } from '../types';
 import { TERMS_TEXT } from '../constants';
@@ -126,7 +126,37 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ preselectedServiceId, onCle
 
   const serviceData = services.find(s => s.id === selectedService);
   const filteredServices = activeCategory === 'Todos' ? services : services.filter(s => s.category === activeCategory);
-  const times = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+  
+  const times = useMemo(() => {
+    const { start, end, breakStart, breakEnd } = salonConfig.businessHours;
+    const availableTimes: string[] = [];
+    
+    try {
+      let current = new Date(`2000-01-01T${start}:00`);
+      const endTime = new Date(`2000-01-01T${end}:00`);
+      const bStart = new Date(`2000-01-01T${breakStart}:00`);
+      const bEnd = new Date(`2000-01-01T${breakEnd}:00`);
+
+      // Limit to prevent infinite loop if config is broken
+      let safetyCounter = 0;
+      while (current < endTime && safetyCounter < 96) {
+        const timeStr = current.toTimeString().slice(0, 5);
+        const currentTime = new Date(`2000-01-01T${timeStr}:00`);
+        
+        if (currentTime < bStart || currentTime >= bEnd) {
+          availableTimes.push(timeStr);
+        }
+        
+        current.setMinutes(current.getMinutes() + 30);
+        safetyCounter++;
+      }
+    } catch (e) {
+      return ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'];
+    }
+    
+    return availableTimes.length > 0 ? availableTimes : ['09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00'];
+  }, [salonConfig.businessHours]);
+
   const today = new Date().toISOString().split('T')[0];
 
   return (
