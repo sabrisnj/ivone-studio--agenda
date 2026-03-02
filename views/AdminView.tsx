@@ -524,7 +524,7 @@ const AdminView: React.FC<AdminViewProps> = ({ onGoToChat }) => {
                               <CheckCircle size={22}/>
                            </button>
                          )}
-                         {(app.status === 'confirmed' || app.status === 'in_service') && app.checkInStatus === 'checked_in' && (
+                         {app.status === 'confirmed' && app.checkInStatus === 'checked_in' && (
                            <div className="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-1">
                              <MapPin size={10}/> No Salão
                            </div>
