@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../store';
 import { TERMS_TEXT } from '../constants';
 import { 
@@ -12,9 +12,9 @@ import {
 import { ClientPreferences } from '../types';
 
 const ProfileView: React.FC = () => {
-  const { user, logout, accessibility, updateAccessibility, updateUserData, acceptTerms, sendFeedback, speak, requestPushPermission } = useApp();
+  const { user, logout, accessibility, updateAccessibility, updateUserData, acceptTerms, sendFeedback, speak, requestPushPermission, appointments, services } = useApp();
   
-  const [activeSection, setActiveSection] = useState<'settings' | 'data' | 'policies'>('settings');
+  const [activeSection, setActiveSection] = useState<'settings' | 'data' | 'policies' | 'appointments'>('settings');
   const [isAcessibilidadeOpen, setIsAcessibilidadeOpen] = useState(false);
   const [isExperienciaOpen, setIsExperienciaOpen] = useState(false);
   const [isGuiaOpen, setIsGuiaOpen] = useState(false);
@@ -22,6 +22,12 @@ const ProfileView: React.FC = () => {
   const [editName, setEditName] = useState(user?.name || '');
   const [editBirth, setEditBirth] = useState(user?.birthDate || '');
   const [isSaved, setIsSaved] = useState(false);
+
+  const userAppointments = useMemo(() => {
+    return appointments
+      .filter(a => a.clientPhone === user?.phone)
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Most recent first
+  }, [appointments, user?.phone]);
 
   const [ritualPrefs, setRitualPrefs] = useState<ClientPreferences>(user?.permanentPreferences || {
     environment: 'none',
@@ -95,26 +101,95 @@ const ProfileView: React.FC = () => {
       </section>
 
       {/* Navegação Interna */}
-      <div className="flex gap-2 p-1.5 bg-stone-50 dark:bg-stone-900 rounded-2xl border border-stone-100 dark:border-stone-800">
+      <div className="flex gap-2 p-1.5 bg-stone-50 dark:bg-stone-900 rounded-2xl border border-stone-100 dark:border-stone-800 overflow-x-auto no-scrollbar">
+        <button 
+          onClick={() => setActiveSection('appointments')}
+          className={`flex-1 py-3.5 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${activeSection === 'appointments' ? 'bg-white dark:bg-stone-800 text-studio-accent shadow-sm' : 'text-stone-600'}`}
+        >
+          <Calendar size={16} className="inline mr-2" /> Agendamentos
+        </button>
         <button 
           onClick={() => setActiveSection('settings')}
-          className={`flex-1 py-3.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeSection === 'settings' ? 'bg-white dark:bg-stone-800 text-studio-accent shadow-sm' : 'text-stone-600'}`}
+          className={`flex-1 py-3.5 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${activeSection === 'settings' ? 'bg-white dark:bg-stone-800 text-studio-accent shadow-sm' : 'text-stone-600'}`}
         >
           <Settings size={16} className="inline mr-2" /> Preferências
         </button>
         <button 
           onClick={() => setActiveSection('data')}
-          className={`flex-1 py-3.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeSection === 'data' ? 'bg-white dark:bg-stone-800 text-studio-accent shadow-sm' : 'text-stone-600'}`}
+          className={`flex-1 py-3.5 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${activeSection === 'data' ? 'bg-white dark:bg-stone-800 text-studio-accent shadow-sm' : 'text-stone-600'}`}
         >
           <UserIcon size={16} className="inline mr-2" /> Meus Dados
         </button>
         <button 
           onClick={() => setActiveSection('policies')}
-          className={`flex-1 py-3.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${activeSection === 'policies' ? 'bg-white dark:bg-stone-800 text-studio-accent shadow-sm' : 'text-stone-600'}`}
+          className={`flex-1 py-3.5 px-4 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap ${activeSection === 'policies' ? 'bg-white dark:bg-stone-800 text-studio-accent shadow-sm' : 'text-stone-600'}`}
         >
           <ShieldCheck size={16} className="inline mr-2" /> Segurança
         </button>
       </div>
+
+      {activeSection === 'appointments' && (
+        <div className="space-y-6 animate-studio-fade">
+          <div className="px-2">
+            <h3 className="text-xl font-serif font-bold dark:text-white">Meus Agendamentos</h3>
+            <p className="text-[9px] text-stone-600 font-bold uppercase tracking-widest mt-0.5">Histórico e Próximos</p>
+          </div>
+          
+          {userAppointments.length > 0 ? (
+            <div className="grid gap-4">
+              {userAppointments.map(app => (
+                <div key={app.id} className="bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-[2.5rem] p-6 shadow-sm space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-studio-accent uppercase tracking-widest">
+                        {app.date.split('-').reverse().join('/')} às {app.time}
+                      </p>
+                      <h4 className="text-base font-bold dark:text-white tracking-tight">
+                        {services.find(s => s.id === app.serviceId)?.name || 'Serviço'}
+                      </h4>
+                    </div>
+                    <span className={`text-[8px] font-bold px-3 py-1.5 rounded-full uppercase tracking-widest ${
+                      app.status === 'confirmed' ? 'bg-emerald-100 text-emerald-600' : 
+                      app.status === 'in_service' ? 'bg-studio-accent/20 text-studio-accent' : 
+                      app.status === 'completed' ? 'bg-stone-100 text-stone-600' :
+                      app.status === 'cancelled' ? 'bg-rose-100 text-rose-600' :
+                      'bg-amber-100 text-amber-600'
+                    }`}>
+                      {app.status === 'confirmed' ? 'Confirmado' : 
+                       app.status === 'in_service' ? 'Em Atendimento' : 
+                       app.status === 'completed' ? 'Concluído' :
+                       app.status === 'cancelled' ? 'Cancelado' :
+                       'Pendente'}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between pt-4 border-t border-stone-50 dark:border-stone-800">
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${app.paymentStatus === 'paid' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                      <p className="text-[9px] font-bold text-stone-500 uppercase tracking-widest">
+                        {app.paymentStatus === 'paid' ? 'Pago' : 'Pagamento Pendente'}
+                      </p>
+                    </div>
+                    {app.status === 'pending' && (
+                      <p className="text-[9px] text-stone-400 italic">Aguardando confirmação da Ivone</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-[2.5rem] p-12 text-center space-y-4 shadow-sm">
+              <div className="w-16 h-16 bg-stone-50 dark:bg-stone-800 rounded-full flex items-center justify-center text-stone-300 mx-auto">
+                <Calendar size={32} />
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-bold dark:text-white">Nenhum agendamento</p>
+                <p className="text-[10px] text-stone-500 uppercase tracking-widest">Você ainda não realizou agendamentos</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {activeSection === 'settings' && (
         <div className="space-y-6 animate-studio-fade">

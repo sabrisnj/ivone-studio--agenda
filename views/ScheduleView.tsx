@@ -36,7 +36,7 @@ interface ScheduleViewProps {
 }
 
 const ScheduleView: React.FC<ScheduleViewProps> = ({ preselectedServiceId, onClearPreselected, onComplete }) => {
-  const { user, addAppointment, services, salonConfig, updateAppointmentPreferences } = useApp();
+  const { user, addAppointment, services, salonConfig, updateAppointmentPreferences, appointments, cancelAppointment } = useApp();
   const [step, setStep] = useState(1);
   const [selectedService, setSelectedService] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
@@ -44,6 +44,15 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ preselectedServiceId, onCle
   const [confirmedId, setConfirmedId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<ServiceCategory | 'Todos'>('Todos');
   const [dateError, setDateError] = useState('');
+  const [showMyAppointments, setShowMyAppointments] = useState(false);
+
+  const userAppointments = useMemo(() => {
+    return appointments
+      .filter(a => a.clientPhone === user?.phone)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  }, [appointments, user?.phone]);
+
+  const upcomingAppointments = userAppointments.filter(a => ['pending', 'confirmed', 'in_service'].includes(a.status));
 
   // Estados de Conformidade
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -172,10 +181,56 @@ const ScheduleView: React.FC<ScheduleViewProps> = ({ preselectedServiceId, onCle
       <div className="min-h-[65vh]">
         {step === 1 && (
           <div className="space-y-8 animate-studio-fade">
-            <div className="px-2">
-              <h3 className="text-4xl font-serif font-medium text-studio-ink dark:text-white tracking-tight">Protocolos</h3>
-              <p className="text-[10px] text-stone-600 font-bold uppercase tracking-[0.25em] mt-1">Escolha seu tratamento</p>
+            <div className="px-2 flex justify-between items-end">
+              <div>
+                <h3 className="text-4xl font-serif font-medium text-studio-ink dark:text-white tracking-tight">Protocolos</h3>
+                <p className="text-[10px] text-stone-600 font-bold uppercase tracking-[0.25em] mt-1">Escolha seu tratamento</p>
+              </div>
+              {upcomingAppointments.length > 0 && (
+                <button 
+                  onClick={() => setShowMyAppointments(!showMyAppointments)}
+                  className="p-3 bg-stone-50 dark:bg-stone-800 rounded-2xl text-studio-accent flex items-center gap-2 transition-all active:scale-95"
+                >
+                  <CalendarIcon size={18} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Meus Agendamentos</span>
+                </button>
+              )}
             </div>
+
+            {showMyAppointments && upcomingAppointments.length > 0 && (
+              <div className="space-y-4 animate-studio-fade">
+                <div className="bg-white dark:bg-stone-900 border border-stone-100 dark:border-stone-800 rounded-[2.5rem] p-6 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-bold text-stone-600 uppercase tracking-widest">Suas Reservas</p>
+                    <button onClick={() => setShowMyAppointments(false)} className="text-stone-400"><X size={16}/></button>
+                  </div>
+                  <div className="space-y-3">
+                    {upcomingAppointments.map(app => (
+                      <div key={app.id} className="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-800 rounded-2xl border border-stone-100 dark:border-stone-700">
+                        <div className="space-y-1">
+                          <p className="text-[11px] font-bold dark:text-white uppercase tracking-tight">
+                            {services.find(s => s.id === app.serviceId)?.name || 'Serviço'}
+                          </p>
+                          <p className="text-[9px] text-stone-500 font-bold">
+                            {app.date.split('-').reverse().join('/')} às {app.time}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className={`text-[8px] font-bold px-2 py-1 rounded-full uppercase tracking-widest ${
+                            app.status === 'confirmed' ? 'bg-emerald-100 text-emerald-600' : 
+                            app.status === 'in_service' ? 'bg-studio-accent/20 text-studio-accent' : 
+                            'bg-amber-100 text-amber-600'
+                          }`}>
+                            {app.status === 'confirmed' ? 'Confirmado' : app.status === 'in_service' ? 'Em Atendimento' : 'Pendente'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2">
               {['Todos', ...Object.values(ServiceCategory)].map(cat => (
                 <button key={cat} onClick={() => setActiveCategory(cat as any)} className={`px-6 py-3 rounded-2xl text-[10px] font-bold whitespace-nowrap border transition-all ${activeCategory === cat ? 'bg-studio-ink text-white border-studio-ink shadow-lg' : 'bg-white dark:bg-stone-900 text-stone-600 border-stone-100 dark:border-stone-800'}`}>{cat}</button>
