@@ -26,7 +26,8 @@ import {
   CheckCircle2,
   CreditCard,
   Wallet,
-  X
+  X,
+  Clock
 } from 'lucide-react';
 
 interface HomeViewProps {
@@ -43,12 +44,17 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
   
   const now = new Date();
   
-  // Active appointment: within 24 hours before or up to 6 hours after start time
+  // Next appointment logic: show the most relevant appointment
   const activeApp = appointments
     .filter(a => 
       a.clientPhone === user?.phone && 
-      ['confirmed', 'in_service'].includes(a.status)
+      ['pending', 'confirmed', 'in_service'].includes(a.status)
     )
+    .sort((a, b) => {
+      const dateA = new Date(`${a.date}T${a.time}`).getTime();
+      const dateB = new Date(`${b.date}T${b.time}`).getTime();
+      return dateA - dateB;
+    })
     .find(a => {
       const [year, month, day] = a.date.split('-').map(Number);
       const [hours, minutes] = a.time.split(':').map(Number);
@@ -57,8 +63,8 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
       const diffMs = appDate.getTime() - now.getTime();
       const diffHours = diffMs / (1000 * 60 * 60);
       
-      // Allow check-in starting 24 hours before, and keep visible up to 6 hours after start
-      return diffHours <= 24 && diffHours >= -6;
+      // Show if it's in the future or was very recently (up to 6 hours ago)
+      return diffHours >= -6;
     });
 
   const handlePhotoCheckIn = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -143,47 +149,76 @@ const HomeView: React.FC<HomeViewProps> = ({ onQuickRebook }) => {
       {activeApp && (
         <section className="animate-fade">
           <div className="bg-gradient-to-br from-[#D99489] to-[#8B5E3C] rounded-[2.5rem] p-6 text-white shadow-xl space-y-4 relative overflow-hidden">
-            <div className="relative z-10">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-100">Seu Próximo Agendamento</p>
-                  <h3 className="text-xl font-serif font-bold">
-                    {services.find(s => s.id === activeApp.serviceId)?.name || 'Serviço'}
-                  </h3>
-                </div>
-                <div className="bg-white/30 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest flex flex-col items-center">
-                  <span>{activeApp.date.split('-').reverse().slice(0, 2).join('/')}</span>
-                  <span>{activeApp.time}</span>
-                </div>
-              </div>
-
-              {activeApp.status === 'confirmed' && activeApp.checkInStatus === 'none' && (
-                <div className="space-y-3 pt-2">
-                  <p className="text-[11px] italic opacity-100">Você já chegou ao studio? Faça seu check-in!</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button 
-                      onClick={handleSimpleCheckIn}
-                      className="bg-white text-[#D99489] py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
-                    >
-                      Estou no Salão
-                    </button>
-                    <button 
-                      onClick={startScanner}
-                      className="bg-black/30 backdrop-blur-md text-white border border-white/40 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
-                    >
-                      <QrCode size={14} /> Scan QR Code
-                    </button>
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      onChange={handlePhotoCheckIn} 
-                      accept="image/*" 
-                      capture="user" 
-                      className="hidden" 
-                    />
+              <div className="relative z-10">
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-100">Seu Próximo Agendamento</p>
+                    <h3 className="text-xl font-serif font-bold">
+                      {services.find(s => s.id === activeApp.serviceId)?.name || 'Serviço'}
+                    </h3>
+                  </div>
+                  <div className="bg-white/30 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest flex flex-col items-center">
+                    <span>{activeApp.date.split('-').reverse().slice(0, 2).join('/')}</span>
+                    <span>{activeApp.time}</span>
                   </div>
                 </div>
-              )}
+
+                {activeApp.status === 'pending' && (
+                  <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 flex items-center gap-3 border border-white/30">
+                    <div className="w-8 h-8 bg-blue-400 rounded-full flex items-center justify-center animate-pulse">
+                      <Clock size={16} className="text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-[10px] font-bold uppercase tracking-widest">Aguardando Confirmação</p>
+                      <p className="text-[9px] opacity-100">Ivone confirmará seu horário em breve.</p>
+                    </div>
+                  </div>
+                )}
+
+                {activeApp.status === 'confirmed' && activeApp.checkInStatus === 'none' && (
+                  <div className="space-y-3 pt-2">
+                    {(() => {
+                      const [year, month, day] = activeApp.date.split('-').map(Number);
+                      const [hours, minutes] = activeApp.time.split(':').map(Number);
+                      const appDate = new Date(year, month - 1, day, hours, minutes);
+                      const diffHours = (appDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+                      
+                      if (diffHours <= 24) {
+                        return (
+                          <>
+                            <p className="text-[11px] italic opacity-100">Você já chegou ao studio? Faça seu check-in!</p>
+                            <div className="grid grid-cols-2 gap-2">
+                              <button 
+                                onClick={handleSimpleCheckIn}
+                                className="bg-white text-[#D99489] py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
+                              >
+                                Estou no Salão
+                              </button>
+                              <button 
+                                onClick={startScanner}
+                                className="bg-black/30 backdrop-blur-md text-white border border-white/40 py-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all"
+                              >
+                                <QrCode size={14} /> Scan QR Code
+                              </button>
+                            </div>
+                          </>
+                        );
+                      } else {
+                        return (
+                          <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 flex items-center gap-3 border border-white/30">
+                            <div className="w-8 h-8 bg-emerald-400 rounded-full flex items-center justify-center">
+                              <CheckCircle2 size={16} className="text-white" />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-[10px] font-bold uppercase tracking-widest">Horário Confirmado</p>
+                              <p className="text-[9px] opacity-100">O check-in estará disponível 24h antes do serviço.</p>
+                            </div>
+                          </div>
+                        );
+                      }
+                    })()}
+                  </div>
+                )}
 
               {activeApp.status === 'in_service' && activeApp.paymentStatus === 'unpaid' && (
                 <div className="space-y-3 pt-2">
